@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>go-im聊天室</title>
+    <link rel="stylesheet" href="/static/css/layui.css" type="text/css">
+    <link rel="stylesheet" href="/static/css/layui.css" type="text/css">
+    <link rel="stylesheet" href="/static/css/index.css" type="text/css">
+</head>
+<body>
+<!--登录框-->
+<form id="login-wrap" class="layui-form">
+    <div class="login-container">
+        <div class="layui-form-item">
+            <div class="layui-input-wrap">
+                <div class="layui-input-prefix">
+                    <i class="layui-icon layui-icon-username"></i>
+                </div>
+                <input type="text" name="username" value="demo" lay-vertype="tips" lay-verify="username"
+                       placeholder="用户名" lay-reqtext="请填写用户名" autocomplete="off" class="layui-input"
+                       lay-affix="clear">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-wrap">
+                <div class="layui-input-prefix">
+                    <i class="layui-icon layui-icon-password"></i>
+                </div>
+                <input type="password" name="password" value="123456" lay-vertype="tips" lay-verify="password"
+                       placeholder="密   码" lay-reqtext="请填写密码" autocomplete="off" class="layui-input"
+                       lay-affix="eye">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <button class="layui-btn layui-btn-fluid" lay-submit lay-filter="login">注册并登录</button>
+        </div>
+    </div>
+</form>
+
+<!--房间列表-->
+<div id="room-wrap">
+    <div id="room-list" class="layui-row layui-col-space20">
+        <!--<div class="room-box layui-col-xs3">
+            <div class="room-item" data-room-id="1">房间1</div>
+        </div>-->
+    </div>
+    <div id="server-info-btn" class="room-item room-tips">服务器信息获取失败，点击重试。</div>
+    <div id="create-room-btn" class="room-item room-tips">创建房间</div>
+</div>
+
+<!--聊天框-->
+<div id="chat-wrap">
+    <div id="chat-header">
+        <span class="title">房间1</span>
+        <i class="layui-icon layui-icon-close-fill close-btn"></i>
+    </div>
+    <div id="chat-box-wrap">
+        <div id="chat-box">
+            <div id="chat-content">
+                <!--提示信息-->
+                <!--<div class="tips">
+                    <span>系统消息：normal</span>
+                </div>-->
+                <!--我发送的消息-->
+                <!--<div class="chat-mine chat-item">
+                    <div class="chat-user">
+                        <span class="user-icon">张</span>
+                        <cite>用户名称</cite>
+                    </div>
+                    <div class="chat-text">123fffffff</div>
+                </div>-->
+                <!--接收到的消息-->
+                <!--<div class="chat-item">
+                    <div class="chat-user">
+                        <span class="user-icon">张</span>
+                        <cite>用户名称</cite>
+                    </div>
+                    <div class="chat-text">123123123123</div>
+                </div>-->
+            </div>
+            <div id="chat-send">
+                <textarea placeholder="请输入内容" class="layui-textarea message"></textarea>
+                <button class="send"> 发送</button>
+            </div>
+        </div>
+        <ul id="chat-user-list">
+            <!--li data-id="1">
+                <span class="user-icon">L</span>
+                <span class="name">1</span>
+            </li>-->
+        </ul>
+    </div>
+</div>
+
+<script src="/static/js/layui.js"></script>
+<script src="/static/js/jquery.js"></script>
+<script>
+    // 本地存储的key
+    let keyUserInfo = "user_info"
+    let keyToken = "token"
+    let keyJoinRoom = "join_room"
+    const ErrorCodeLogin = 40001 // 需要重新登录的错误码
+    // const GatewayHost = "http://127.0.0.1:9001" // 网关地址
+    const GatewayHost = {{.gateway_host}} // 网关地址
+
+    layui.use(function () {
+        let form = layui.form;
+        let layer = layui.layer;
+
+        let $chatContent = $("#chat-content")
+        let $chatRoomName = $("#chat-header .title")
+        let $closeRoomBtn = $('#chat-header .close-btn')
+        let $loginWrap = $("#login-wrap")
+        let $roomWrap = $("#room-wrap")
+        let $chatWrap = $("#chat-wrap")
+        let $roomList = $("#room-list")
+        let $createRoomBtn = $("#create-room-btn")
+        let $serverInfoBtn = $("#server-info-btn")
+        let $chatUserList = $("#chat-user-list")
+        let $chatSend = $("#chat-send .send")
+        let $chatSendMsg = $("#chat-send .message")
+
+        let fn = {
+            setLocalStorage: function (key, value) { // 保存到本地存储
+                value = JSON.stringify(value)
+                localStorage.setItem(key, value)
+            },
+            getLocalStorage: function (key) { // 从本地存储获取
+                return JSON.parse(localStorage.getItem(key))
+            },
+            removeLocalStorage: function (key) {
+                localStorage.removeItem(key)
+            },
+            chatScrollNew: function () { // 滚动条滚动到最新位置
+                $chatContent.scrollTop($chatContent.prop("scrollHeight"))
+            },
+            getUserInfo: function () {
+                let userInfo = fn.getLocalStorage(keyUserInfo)
+                if (!userInfo) {
+                    wsManager.closeConnect()
+                    return
+                }
+                return userInfo
+            }
+        }
+
+        // 聊天信息管理
+        let chatManager = {
+            tips: function (tips) { // 提醒消息
+                $chatContent.append(
+                    '<div class="tips"><span>' + tips + '</span></div>'
+                )
+                fn.chatScrollNew()
+            },
+            mineChat: function (data) { // 我发送的消息
+                $chatContent.append(`
+                    <div class="chat-mine chat-item">
+                    <div class="chat-user">
+                        <span class="user-icon">${data.username[0]}</span>
+                        <cite>${data.username}</cite>
+                    </div>
+                    <div class="chat-text">${data.data}</div>
+                </div>
+                `)
+                fn.chatScrollNew()
+            },
+            normalChat: function (data) { // 普通消息
+                let username = data.from_username || "未知用户"
+                $chatContent.append(`
+                    <div class="chat-item">
+                    <div class="chat-user">
+                        <span class="user-icon">${username[0]}</span>
+                        <cite>${username}</cite>
+                    </div>
+                    <div class="chat-text">${data.data}</div>
+                </div>
+                `)
+                fn.chatScrollNew()
+            },
+            renderUserList: function (data) { // 渲染用户列表
+                let result = ""
+                data.forEach((v) => {
+                    result += `<li data-id="${v.id}">
+                <span class="user-icon">${v.name[0]}</span>
+                <span class="name">${v.name}</span>
+            </li>`
+                });
+                $chatUserList.html(result)
+            },
+            addUserItem: function (data) { // 单个用户
+                $chatUserList.append(`<li data-id="${data.id}">
+                <span class="user-icon">${data.name[0]}</span>
+                <span class="name">${data.name}</span>
+            </li>`)
+                // $chatUserList.append(result)
+            },
+            removeUser: function (userId) { // 移除用户
+                $chatUserList.children("li").each(function (i, n) {
+                    let $obj = $(n)
+                    if ($obj.data("id") === userId) {
+                        $obj.remove()
+                    }
+                })
+            },
+            resetChatRoom: function () { // 重置房间
+                $chatContent.html("")
+                $chatUserList.html("")
+            }
+        }
+
+        // 基础管理器
+        let baseManager = {
+            gatewayUrl: GatewayHost + "/go-im",
+            init: function () {
+                // 首页内容展示判断
+                if (fn.getLocalStorage(keyToken)) {
+                    baseManager.loginAfter()
+                } else {
+                    baseManager.showLoginWrap()
+                }
+
+                // 绑定事件
+                baseManager.bindEvent()
+            },
+            bindEvent: function () { // 事件绑定
+                // ===================== 事件绑定
+                $serverInfoBtn.click(function () { // 获取ws服务器信息
+                    baseManager.handleGetServerInfo()
+                })
+                $createRoomBtn.click(function () { // 创建房间
+                    layer.prompt({title: '请输入房间名称', formType: 2}, function (value, index, elem) {
+                        if (value === '') return elem.focus();
+                        wsManager.createRoom($.trim(value))
+                        // 关闭 prompt
+                        layer.close(index);
+                    });
+                })
+                // 加入房间
+                $roomList.on('click', '.room-item', function (e) {
+                    let roomId = $(e.target).attr('data-room-id')
+                    fn.setLocalStorage(keyJoinRoom, Number(roomId))
+                    wsManager.joinRoom(roomId)
+                })
+
+                // 提交事件
+                form.on('submit(login)', function (data) {
+                    // 登录操作
+                    baseManager.handleLogin(data.field)
+                    return false; // 阻止默认 form 跳转
+                });
+
+                // 发送内容操作
+                let sendMsgFn = function () {
+                    let msg = $chatSendMsg.val()
+                    // 发送消息
+                    wsManager.roomMsg(msg)
+                    // 显示消息
+                    let userInfo = fn.getUserInfo()
+                    if (!userInfo) {
+                        return
+                    }
+                    chatManager.mineChat({
+                        username: userInfo.username,
+                        data: msg,
+                    })
+                    // 清空消息
+                    $chatSendMsg.val("")
+                }
+
+                // 监听回车键发送消息
+                $chatSendMsg.keyup(function (event) {
+                    if (event.keyCode === 13) {
+                        sendMsgFn()
+                    }
+                });
+
+                // 发送消息
+                $chatSend.click(sendMsgFn)
+
+                // 关闭聊天框
+                $closeRoomBtn.click(function () {
+                    wsManager.leaveRoom()
+                })
+            },
+            handleLogin: function (data) { // 登录
+                this.ajaxRequest("post", "/auth/login-register", data, function (data, status, xhr) {
+                    fn.setLocalStorage(keyUserInfo, {
+                        "id": data.id,
+                        "username": data.username,
+                        "nickname": data.username,
+                        "server_addr": data.server_addr,
+                    })
+                    baseManager.loginAfter()
+                })
+            },
+            loginAfter: function () { // 登录后进行的操作
+                baseManager.showServerInfoBtn()
+                if (fn.getUserInfo().server_addr) {
+                    wsManager.dial()
+                }
+            },
+            handleGetServerInfo: function () { // 获取服务器信息
+                this.ajaxRequest("get", "/auth/service", {}, function (data) {
+                    if (data.server_addr) {
+                        let userInfo = fn.getUserInfo()
+                        if (!userInfo) {
+                            return
+                        }
+
+                        if (!userInfo.server_addr) {
+                            userInfo.server_addr = data.server_addr
+                            fn.setLocalStorage(keyUserInfo, userInfo)
+                            // 连接服务
+                            wsManager.dial(false)
+                        }
+                        return
+                    }
+                    layer.msg('服务器信息获取失败，请稍后再试');
+                })
+            },
+            renderRoomList: function (data) { // 渲染房间列表
+                $createRoomBtn.show()
+                let html = ""
+                for (let i = 0; i < data.length; i++) {
+                    if (data[i].name === "") {
+                        data[i].name = "房间" + (i + 1)
+                    }
+                    html += this.roomItemStr(data[i].id, data[i].name)
+                }
+                $roomList.html(html)
+                $roomList.show()
+            },
+            pushRoomItem: function (roomId, roomName) { // 新增房间
+                console.log('新增房间', roomId, roomName)
+                if ($chatWrap.is(':hidden')) { // 不在对话框，隐藏商品
+                    $roomList.show()
+                }
+                $roomList.append(this.roomItemStr(roomId, roomName))
+                // $createRoomBtn.hide()
+            },
+            roomItemStr: function (roomId, roomName) {
+                // 创建过房间，隐藏创建房间按钮
+                let userInfo = fn.getUserInfo()
+                if (!userInfo) {
+                    return
+                }
+                if (userInfo.id === Number(roomId)) {
+                    $createRoomBtn.hide()
+                }
+                return `<div class="room-box layui-col-xs3">
+                                <div class="room-item" data-room-id="${roomId}">${roomName}</div>
+                            </div>`
+            },
+            showLoginWrap: function () { // 显示登录框
+                if (wsManager.ws) {
+                    wsManager.ws.close()
+                }
+                localStorage.clear()
+                $loginWrap.show()
+                $roomWrap.hide()
+                $chatWrap.hide()
+            },
+            showRoomWrap: function () { // 显示房间列表
+                $loginWrap.hide()
+                $roomWrap.show()
+                $serverInfoBtn.hide()
+                // $createRoomBtn.hide()
+                $chatWrap.hide()
+            },
+            showChatWrap: function (roomName) { // 显示聊天框
+                $loginWrap.hide()
+                $roomWrap.hide()
+                $chatWrap.show()
+                $chatRoomName.text(roomName)
+            },
+            showRoomList: function () { // 显示房间列表
+                $roomList.show()
+                $serverInfoBtn.hide()
+                $createRoomBtn.show()
+                $chatWrap.hide()
+            },
+            showServerInfoBtn: function () { // 显示服务器信息按钮
+                $loginWrap.hide()
+                $roomWrap.show()
+                $roomList.hide()
+                $serverInfoBtn.show()
+                $createRoomBtn.hide()
+                $chatWrap.hide()
+            },
+            showCreateRoomBtn: function () { // 显示创建房间按钮
+                $roomWrap.show()
+                $roomList.hide()
+                $serverInfoBtn.hide()
+                $createRoomBtn.show()
+                $chatWrap.hide()
+            },
+            ajaxRequest: function (method, url, data, callback) {
+                let load = layer.load(1, {shade: 0.3});
+                let _this = this
+
+                $.ajax({
+                    url: this.gatewayUrl + url,
+                    type: method,
+                    timeout: 5000,
+                    data: JSON.stringify(data),
+                    contentType: "application/json;charset=UTF-8",
+                    dataType: "json",
+                    beforeSend: function (request) {
+                        let token = fn.getLocalStorage(keyToken);
+                        if (token) {
+                            request.setRequestHeader("Authorization", token);
+                        }
+                    },
+                    success: function (res, status, xhr) {
+                        layer.close(load)
+                        if (res.status === 0) {
+                            if (res.data.token) {
+                                fn.setLocalStorage(keyToken, res.data.token)
+                            }
+                            callback(res.data, status, xhr)
+                            return
+                        } else if (res.status === 30000) {
+                            _this.showLoginWrap()
+                        }
+
+                        layer.msg(res.message)
+                    },
+                    error: function (xhr, status, error) {
+                        layer.close(load)
+                        layer.msg("服务器请求错误！")
+                        console.log(error);
+                    }
+                })
+            },
+        }
+
+        form.verify({
+            username: function (value) {
+                if (value.length < 3 || value.length > 20) {
+                    return '用户名，长度必须在 3-20 个字符之间';
+                }
+                if (!new RegExp("^[a-zA-Z0-9_\\s·]+$").test(value)) {
+                    return '用户名，只能为字母、数字、下划线';
+                }
+                if (/(^_)|(__)|(_+$)/.test(value)) {
+                    return '用户名首尾不能出现下划线';
+                }
+            },
+            password: function (value) {
+                if (value.length < 6 || value.length > 30) {
+                    return '密码，长度必须在 6-30 个字符之间';
+                }
+            }
+        })
+
+        const method = {
+            createRoom: 1, // 创建房间
+            joinRoom: 2, // 加入房间
+            roomList: 3, // 房间列表
+            roomUser: 4, // 房间用户列表
+            roomMsg: 5, // 群聊消息
+            online: 7, // 上线消息/加入房间
+            offline: 8, // 下线消息/离开房间
+            createRoomNotice: 9, // 新增房间通知
+        }
+
+        const methodName = {
+            1: "创建房间",
+            2: "加入房间",
+            3: "房间列表",
+            4: "房间用户列表",
+            5: "群聊消息",
+            7: "上线消息/加入房间",
+            8: "下线消息/离开房间",
+            9: "新建房间通知",
+        }
+
+        let wsManager = {
+            ws: null,
+            dialErrNum: 0, // 错误次数
+            dial: function (isRetry) {
+                // 已连接直接返回
+                if (!!this.ws) {
+                    return
+                }
+
+                if (isRetry) {
+                    // 当前服务地址重试3次失败，重新连接
+                    if (wsManager.dialErrNum > 3) {
+                        console.log("服务重试失败超过3次")
+                        baseManager.showServerInfoBtn()
+                        return
+                    } else {
+                        wsManager.dialErrNum++
+                    }
+                }
+
+                let _this = this
+                let token = fn.getLocalStorage(keyToken)
+                let userInfo = fn.getUserInfo()
+                if (!userInfo) {
+                    return
+                }
+                if (!token) {
+                    baseManager.showLoginWrap()
+                    return false
+                }
+                _this.ws = new WebSocket("ws://" + userInfo.server_addr + "/ws?token=" + token)
+                _this.ws.onopen = function () {
+                    wsManager.dialErrNum = 0
+                    console.log('websocket 服务器已连接')
+                    $serverInfoBtn.hide()
+                    wsManager.roomList()
+                }
+                _this.ws.onmessage = _this.handleMsg
+                _this.ws.onclose = function () {
+                    _this.close()
+                }
+                _this.ws.addEventListener("error", function (event) {
+                    console.log("WebSocket error: ", event);
+                    // 连接失败，删除服务器地址，前端重新获取
+                    baseManager.showServerInfoBtn()
+                    let userInfo = fn.getUserInfo()
+                    userInfo.server_addr = ""
+                    fn.setLocalStorage(keyUserInfo, userInfo)
+                });
+                return this
+            },
+            handleMsg: function (event) { // 处理接收到的消息
+                let ret = JSON.parse(event.data)
+                console.log(ret)
+                if (ret.code !== 0) {
+                    layer.msg(ret.msg)
+                    // 授权失败，重新登录
+                    if (ret.code === ErrorCodeLogin) {
+                        wsManager.closeConnect()
+                    }
+                    return
+                }
+
+                switch (ret.method) {
+                    case method.createRoom: // 创建房间
+                        wsManager.roomList()
+                        break
+                    case method.joinRoom: // 加入房间
+                        wsManager.handleJoinRoomResp(ret.data)
+                        break
+                    case method.roomList: // 房间列表
+                        wsManager.handleRoomListResp(ret.data)
+                        break
+                    case method.roomUser: // 房间用户列表
+                        chatManager.renderUserList(ret.data)
+                        break
+                    case method.roomMsg: // 群聊消息
+                        chatManager.normalChat(ret)
+                        break
+                    case method.online: // 上线消息/加入房间
+                        wsManager.handleOnlineResp(ret.data)
+                        break
+                    case method.offline: // 下线消息/离开房间
+                        wsManager.handleOfflineResp(ret.data)
+                        break
+                    case method.createRoomNotice: // 新建房间通知
+                        baseManager.pushRoomItem(ret.data.id, ret.data.name)
+                        break
+                }
+                console.log('来自服务器发来的数据', 'method:' + ret.method, methodName[ret.method], ret.msg)
+            },
+            closeConnect: function () {
+                if (wsManager.ws) {
+                    wsManager.ws.close()
+                    wsManager.ws = null
+                }
+                baseManager.showLoginWrap()
+            },
+            handleRoomListResp: function (data) { // 处理房间列表结果
+                if (data.length === 0) {
+                    baseManager.showCreateRoomBtn()
+                    return false
+                }
+
+                baseManager.showRoomWrap()
+                // 渲染房间列表
+                baseManager.renderRoomList(data)
+            },
+            handleJoinRoomResp: function (data) {
+                // 重置聊天框
+                chatManager.resetChatRoom()
+                // 显示群聊框
+                baseManager.showChatWrap(data.name)
+                wsManager.getUserList()
+            },
+            handleOnlineResp: function (data) {
+                // 用户列表添加用户
+                chatManager.addUserItem(data)
+                // 显示提示信息
+                chatManager.tips(data.name + ' 加入房间')
+            },
+            handleOfflineResp: function (data) {
+                // 移除用户
+                chatManager.removeUser(data.id)
+                // 当前用户离开房间，则关闭群聊框
+                let userInfo = fn.getUserInfo()
+                if (!userInfo) {
+                    return
+                }
+                if (userInfo.id === data.id) {
+                    baseManager.showRoomList()
+                    wsManager.roomList()
+                } else {
+                    // 显示提示信息
+                    chatManager.tips(data.name + ' 离开房间')
+                }
+            },
+            createRoom: function (roomName) {
+                this.sendMsg(method.createRoom, 0, roomName)
+            },
+            leaveRoom: function () {
+                this.sendMsg(method.offline)
+            },
+            joinRoom: function (roomId) { // 加入房间
+                this.sendMsg(method.joinRoom, roomId)
+            },
+            roomList: function () { // 房间列表
+                this.sendMsg(method.roomList)
+            },
+            getUserList: function () { // 获取用户列表
+                this.sendMsg(method.roomUser)
+            },
+            roomMsg: function (msg) { // 发送房间消息
+                this.sendMsg(method.roomMsg, 0, msg)
+            },
+            sendMsg: function (method, roomId, data) { // 发送群聊消息
+                let inputData = {
+                    request_id: this.requestId(),
+                    method: method,
+                    data: data,
+                }
+                if (roomId) {
+                    inputData.room_id = Number(roomId)
+                }
+                let msg = JSON.stringify(inputData)
+                if (this.ws) {
+                    console.log("发送消息:", msg)
+                    this.ws.send(msg)
+                } else {
+                    // 重新连接
+                    wsManager.close()
+                    // this.dial().send(msg)
+                    console.log(this.ws)
+                    layer.msg('连接已断开，请重新加入房间')
+                    fn.removeLocalStorage(keyJoinRoom)
+                    // baseManager.showRoomList()
+                    wsManager.dial(true) // 重新连接
+                }
+            },
+            requestId: function (e) { // 请求 id
+                e = e || 12;
+                var t = "ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678",
+                    a = t.length,
+                    n = "";
+                for (i = 0; i < e; i++) n += t.charAt(Math.floor(Math.random() * a));
+                return n
+            },
+            close: function () {
+                console.log('服务器关闭')
+                if (wsManager.ws) {
+                    wsManager.ws.close()
+                    wsManager.ws = null
+                }
+            }
+        }
+
+        // 初始化操作
+        baseManager.init()
+    });
+</script>
+</body>
+</html>

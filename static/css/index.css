@@ -1,0 +1,292 @@
+* {
+    padding: 0;
+    margin: 0;
+}
+li {
+    list-style: none;
+    display: list-item;
+    unicode-bidi: isolate;
+}
+
+html, body {
+    background: #FAFAFA;
+    height: 100%;
+    color: #333;
+    font-size: 16px;
+}
+
+#login-wrap {
+    background: #fff;
+    width: 400px;
+    height: 180px;
+    padding: 20px 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-top: -110px;
+    margin-left: -200px;
+    display: none;
+    border-radius: 8px;
+    box-shadow: 0 3px 15px 0 rgba(0, 0, 0, .06);
+}
+
+#room-list, #server-info-btn, #chat-wrap, #create-room-btn {
+    display: none;
+}
+
+#room-list {
+    width: 100%;
+    max-width: 1170px;
+    margin: 0 auto;
+    padding-top: 20px;
+}
+
+.room-item {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 3px 15px 0 rgba(0, 0, 0, .06);
+    text-align: center;
+    min-width: 100px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    height: 120px;
+    line-height: 120px;
+    color: #333;
+    font-size: 28px;
+    cursor: pointer;
+    transition-duration: 0.5s;
+}
+
+#room-list .room-item:hover {
+    transform: scale(1.1);
+}
+
+.room-tips {
+    width: 100%;
+    max-width: 500px;
+    margin: 20px auto;
+    font-size: 14px;
+    height: 50px;
+    line-height: 50px;
+}
+
+.login-container {
+    width: 320px;
+    margin: 21px auto 0;
+}
+
+.login-other .layui-icon {
+    position: relative;
+    display: inline-block;
+    margin: 0 2px;
+    top: 2px;
+    font-size: 26px;
+}
+
+/* ======================== 聊天框 ================================*/
+.user-icon {
+    display: block;
+    height: 40px;
+    width: 40px;
+    line-height: 40px;
+    border-radius: 40px;
+    background-color: #58B7DB;
+    color: #fff;
+    text-align: center;
+    font-size: 18px;
+}
+#chat-wrap {
+    width: 100%;
+    margin: 0 auto;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+#chat-header {
+    height: 59px;
+    line-height: 59px;
+    background: rgba(245, 245, 245, .7);
+    padding: 0 15px;
+    border-bottom: 1px solid #d3d3d3;
+}
+#chat-header .close-btn {
+    float: right;
+    cursor: pointer;
+    font-size: 30px;
+}
+#chat-box-wrap {
+    display: flex;
+    flex-wrap: nowrap;
+    position: absolute;
+    width: 100%;
+    top: 60px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #F6F6F6;
+}
+#chat-box {
+    flex: 1;
+    height: 100%;
+    position: relative;
+}
+#chat-content {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 150px;
+    background: #f8f9fa;
+    scroll-behavior: smooth;
+    overflow-y: auto;
+    padding: 0 15px;
+}
+#chat-content .chat-item {
+    position: relative;
+    margin-bottom: 10px;
+    padding-left: 60px;
+    min-height: 68px;
+    margin-top: 4px;
+}
+#chat-content .chat-user {
+    position: absolute;
+    left: 3px;
+}
+#chat-content .chat-mine {
+    text-align: right;
+    padding-left: 0;
+    padding-right: 60px;
+}
+#chat-content .chat-mine .chat-user {
+    position: absolute;
+    right: 3px;
+    left: auto;
+}
+#chat-content cite {
+    position: absolute;
+    top: -2px;
+    left: 60px;
+    width: 500px;
+    line-height: 24px;
+    font-size: 12px;
+    white-space: nowrap;
+    color: #999;
+    font-style: normal;
+    text-align: left;
+}
+#chat-content .chat-mine cite {
+    position: absolute;
+    color: #999;
+    right: 60px;
+    text-align: right;
+    left: auto;
+}
+#chat-content .chat-text {
+    position: relative;
+    line-height: 22px;
+    margin-top: 25px;
+    padding: 8px 15px;
+    border-radius: 3px;
+    word-break: break-all;
+    background-color: #47D3CB;
+    display: inline-block;
+    vertical-align: top;
+    font-size: 14px;
+    color: #fff;
+    border-width: 0;
+}
+#chat-content .chat-text:after {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 13px;
+    width: 0;
+    height: 0;
+    border-style: solid dashed dashed;
+    border-color: #47D3CB transparent transparent;
+    overflow: hidden;
+    border-width: 10px;
+}
+#chat-content .chat-mine .chat-text {
+    background-color: #e2e2e2;
+}
+#chat-content .chat-mine .chat-text {
+    text-align: left;
+    background-color: #5FB878;
+    border-style: solid dashed dashed;
+    border-color: #5FB878 transparent transparent;
+}
+#chat-content .chat-mine .chat-text:after {
+    left: auto;
+    right: -10px;
+    border-top-color: #5FB878;
+}
+#chat-content .tips {
+    margin: 12px;
+    text-align: center;
+    font-size: 12px;
+}
+#chat-content .tips span{
+    display: inline-block;
+    padding: 4px;
+    background-color: #ccc;
+    color: #fff;
+    border-radius: 6px;
+    text-align: center;
+}
+#chat-send {
+    width: 100%;
+    height: 150px;
+    position: absolute;
+    bottom: 0;
+    background: #fff;
+    border-top: 1px solid #e6e6e6;
+}
+#chat-send textarea {
+    width: 100%;
+    height: 110px;
+    border: none;
+    padding: 15px;
+    resize: none;
+    overflow-wrap: break-word;
+    word-break: break-all;
+    overflow-y: scroll;
+}
+#chat-send .send {
+    float: right;
+    padding: 4px 20px;
+    margin-right: 14px;
+    margin-top: 6px;
+    color: #fff;
+    background: linear-gradient(20deg,rgba(63,143,225,.8) 0,#44d7c9 100%);
+    box-shadow: 5px 5px 15px 0 rgba(102,102,102,.1);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* ========================= 用户列表 ============================== */
+#chat-user-list {
+    width: 200px;
+    height: 100%;
+    border-left: 1px solid #e6e6e6;
+    background-color: #fff;
+    color: #333;
+}
+#chat-user-list li {
+    height: 42px;
+    margin: 5px;
+    font-size: 14px;
+}
+#chat-user-list .user-icon {
+    float: left;
+}
+#chat-user-list .name {
+    float: left;
+    line-height: 42px;
+    margin-left: 10px;
+    width: 100px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

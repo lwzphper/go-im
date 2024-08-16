@@ -1,0 +1,44 @@
+##################### 基本配置 ####################
+app:
+  name: go-im
+  env: debug # debug, release, test
+  gateway_addr: ":9001"
+  in_docker: true  # 是否运行在 docker 环境
+
+##################### consul配置 ####################
+consul:
+  host: 127.0.0.1:8500
+  tag: go-im
+  check_timeout: 5s # 监控超时时间
+  check_interval: 10s # 监控检查间隔
+  check_dead_deregister: 30s # 故障检查失败 xs后 consul自动将注册服务删除
+
+##################### 日志配置 ####################
+logging: # 正常错误日志
+#  name: go_im
+#  file_name: ./log/rotate.log
+  level: debug
+
+##################### redis配置 ####################
+redis:
+  name: default
+  addr: 127.0.0.1:6379
+  password: ""
+  database: 0
+  min_idle_conn: 1
+  pool_size: 32
+  max_retries: 5
+
+##################### jwt配置 ####################
+jwt:
+  secret: "9fGiN70ShhADF8prPh8Fpkk3N5HsNMGx"
+  ttl: 86400
+
+##################### mysql配置 ####################
+mysql:
+  - client_name: default
+    host: 127.0.0.1
+    port: 3306
+    username: root
+    password: 123456
+    database: go_im

@@ -1,0 +1,47 @@
+version: "3.7"
+services:
+  consul:
+    image: consul:1.15.4
+    container_name: consul
+    restart: always
+    networks:
+      - go_im
+    ports:
+      - "8500:8500"
+      - "8600:8600/tcp"
+      - "8600:8600/udp"
+    command: "agent -server -bootstrap -ui -bind=127.0.0.1 -client=0.0.0.0"
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+  redis:
+    image: redis:7.2.5
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis/redis.conf:/etc/redis.conf:ro
+      - ./redis/data:/data/:rw
+    restart: always
+    entrypoint: [ "redis-server", "/etc/redis.conf" ]
+    networks:
+      - go_im
+  mysql:
+    image: mysql/mysql-server:8.0.28
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql/mysql.cnf:/etc/mysql/conf.d/mysql.cnf:ro
+      - ./mysql/data:/var/lib/mysql/:rw
+      - ./mysql/log:/var/log/mysql/:rw
+      - ./mysql/sql:/docker-entrypoint-initdb.d/:rw
+    restart: always
+    networks:
+      - go_im
+    environment:
+      MYSQL_ROOT_PASSWORD: "123456"
+      MYSQL_ROOT_HOST: "%"
+      TZ: "Asia/Shanghai"
+networks:
+  go_im:
+    driver: bridge

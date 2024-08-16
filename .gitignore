@@ -1,0 +1,35 @@
+.idea
+.run
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+.DS_Store
+
+dist
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+.vscode
+__debug_bin
+
+private.key
+
+# log
+*.log
+
+go.sum
+
+# 程序编辑目录
+dist
+
+# 编译程序
+gateway/gateway
+server/server
