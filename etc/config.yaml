@@ -22,7 +22,7 @@ logging: # 正常错误日志
 ##################### redis配置 ####################
 redis:
   name: default
-  addr: 127.0.0.1:6379
+  addr: 127.0.0.1:16379
   password: ""
   database: 0
   min_idle_conn: 1

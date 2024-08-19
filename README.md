@@ -22,12 +22,7 @@ docker-compose up -f docker/docker-comopse.yml -d
 
 #### 方式二、手动安装
 
-安装依赖，如果已安装直接跳过
-
-```shell
-# redis、mysql、consul 都是使用默认端口，如果与本地的服务冲突，需要修改端口
-docker-compose -f docker/docker-compose.yml up -d 
-```
+需要自行安装依赖的中间件：redis、mysql、consul。并修改 `./etc/config.yaml` 对应的地址、端口
 
 ```shell
 # 编译
@@ -36,10 +31,10 @@ go build -o ./dist/service ./cmd/service/main.go
 go build -o ./dist/gateway ./cmd/gateway/main.go
 
 # 运行网关
-./dist/gateway
-# 运行两个 service
-./dist/service -a :8080
-./dist/service -a :8081
+./dist/gateway -f ./etc/config.yaml
+# 运行两个 service（由于默认的配置文件配置项是针对 docker 容器配置的，因此这里必须指定配置文件执行）
+./dist/service -a :8080 -f ./etc/config.yaml
+./dist/service -a :8081 -f ./etc/config.yaml
 ```
 
 #### 启动
