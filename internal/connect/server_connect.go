@@ -36,9 +36,10 @@ type WsConn struct {
 	serverId string // 服务id，用于 consul 注册
 }
 
-func InitServer(c *WsConn, addr string) {
-	c = NewWsConn(addr)
+func InitServer(addr string) *WsConn {
+	c := NewWsConn(addr)
 	go c.StartServer()
+	return c
 }
 
 func NewWsConn(address string) *WsConn {

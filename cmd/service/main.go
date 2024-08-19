@@ -14,8 +14,6 @@ func main() {
 	var addr = flag.String("a", ":8080", "http service address")
 	var confFile = flag.String("f", "", "the service config from file")
 
-	var conn *connect.WsConn
-
 	flag.Parse()
 	defer logger.Sync()
 
@@ -30,7 +28,8 @@ func main() {
 	consul.Init(config.C.Consul.Host)
 
 	// 解决 internal 目录不能外部引用问题
-	connect.InitServer(conn, *addr)
+	var conn *connect.WsConn
+	conn = connect.InitServer(*addr)
 
 	hook := server.NewHook()
 	hook.Close(func(sg os.Signal) {
