@@ -6,7 +6,7 @@ import (
 	"go-im/internal/gateway/domain/user"
 	"go-im/internal/gateway/domain/user/model"
 	"go-im/pkg/mysql"
-	util "go-im/pkg/util"
+	"go-im/pkg/util"
 	"gorm.io/gorm"
 )
 

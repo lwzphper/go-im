@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"go-im/pkg/response"
-	util "go-im/pkg/util"
+	"go-im/pkg/util"
 
 	"github.com/gin-gonic/gin"
 )

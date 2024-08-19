@@ -5,7 +5,7 @@ import (
 	"go-im/internal/connect/repo"
 	"go-im/pkg/logger"
 	pkgRedis "go-im/pkg/redis"
-	util "go-im/pkg/util"
+	"go-im/pkg/util"
 	"sync"
 )
 

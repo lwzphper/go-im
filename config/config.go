@@ -5,7 +5,7 @@ import (
 	"go-im/pkg/logger"
 	"go-im/pkg/mysql"
 	"go-im/pkg/redis"
-	util "go-im/pkg/util"
+	"go-im/pkg/util"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	gormLogger "gorm.io/gorm/logger"
@@ -18,13 +18,13 @@ var C = NewConfig()
 func NewConfig() *Config {
 	return &Config{
 		App: App{
-			Name:        "go-im",
-			Env:         "debug",
-			InDocker:    true,
-			GatewayAddr: ":9001",
+			Name: "go-im",
+			Env:  "debug",
+			//InDocker:    true,
+			GatewayAddr: "gateway:9001",
 		},
 		Consul: Consul{
-			Host:                "127.0.0.1:8500",
+			Host:                "consul:8500",
 			Tag:                 "go-im",
 			CheckTimeout:        "5s",
 			CheckInterval:       "10s",
@@ -39,17 +39,17 @@ func NewConfig() *Config {
 		},
 		Redis: Redis{
 			Name:        "default",
-			Addr:        "127.0.0.1:6379",
+			Addr:        "redis:16379",
 			Password:    "",
 			Database:    0,
-			MinIdleConn: 1,
+			MinIdleConn: 3,
 			PoolSize:    32,
 			MaxRetries:  5,
 		},
 		Mysql: []Mysql{
 			{
 				ClientName: mysql.DefaultClient,
-				Host:       "127.0.0.1",
+				Host:       "mysql",
 				Port:       "3306",
 				UserName:   "root",
 				Password:   "123456",

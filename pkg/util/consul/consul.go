@@ -5,6 +5,7 @@ import (
 	"github.com/hashicorp/consul/api"
 	"go-im/pkg/consul"
 	"go-im/pkg/logger"
+	"go-im/pkg/util"
 	"go.uber.org/zap"
 	"net"
 	"net/http"
@@ -72,9 +73,6 @@ func (c *Consul) HealthService() ([]*api.AgentService, error) {
 		return result, err
 	}
 
-	for _, service := range result {
-		service.Address = c.getServerAddress(service.Address)
-	}
 	return result, nil
 }
 
@@ -135,14 +133,15 @@ func (c *Consul) RoundHealthServerUrl() string {
 
 // 兼容 docker 地址
 func (c *Consul) getServerAddress(addr string) string {
-	if addr == "host.docker.internal" {
+	// 非 ip 地址（宿主机访问docker容器的情况），返回本地回环地址
+	if !util.CheckIsIp(addr) {
 		return "127.0.0.1"
 	}
 	return addr
 }
 
 // Heartbeat 心跳检查健康节点（测试中发现，服务注销时，有时候没有通知，这里是兜底方案）
-func (c *Consul) Heartbeat() {
+/*func (c *Consul) Heartbeat() {
 	ticker := time.NewTicker(c.checkHealthTime)
 	for range ticker.C {
 		for _, service := range c.healthList {
@@ -169,7 +168,7 @@ func (c *Consul) Heartbeat() {
 			c.serviceErrNum[service.ID] = errNum + 1
 		}
 	}
-}
+}*/
 
 // 检查节点是否健康
 func (c *Consul) checkHealth(host string) bool {

@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
 )
@@ -31,20 +32,20 @@ func SplitAddress(addr string, inDocker bool) (*IpHost, error) {
 
 	split := strings.Split(addr, ":")
 	if len(split) != 1 && len(split) != 2 {
-		return nil, fmt.Errorf("address format error")
+		return nil, fmt.Errorf("address format error: %s", addr)
 	}
 
 	port = 80
 	if len(split) == 2 {
 		if port, err = strconv.Atoi(split[1]); err != nil {
-			return nil, fmt.Errorf("address format error")
+			return nil, fmt.Errorf("address port error %s, port: %s", err.Error(), split[1])
 		}
 	}
 
 	ip := split[0]
 	if ip == "" {
 		if inDocker {
-			ip = "host.docker.internal" // // docker 访问宿主机地址
+			ip = "host.docker.internal" // docker 访问宿主机地址
 		} else {
 			ip = "127.0.0.1"
 		}
@@ -54,6 +55,11 @@ func SplitAddress(addr string, inDocker bool) (*IpHost, error) {
 		Host: ip,
 		Port: port,
 	}, nil
+}
+
+// 判断是否ip地址
+func CheckIsIp(ip string) bool {
+	return net.ParseIP(ip) != nil
 }
 
 func Uint64ToString(num uint64) string {

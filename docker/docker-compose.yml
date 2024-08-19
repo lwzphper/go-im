@@ -14,15 +14,15 @@ services:
     extra_hosts:
       - 'host.docker.internal:host-gateway'
   redis:
-    image: redis:7.2.5
+    image: redis:7.4.0-alpine
     container_name: redis
     ports:
-      - "6379:6379"
-    volumes:
-      - ./redis/redis.conf:/etc/redis.conf:ro
-      - ./redis/data:/data/:rw
+      - "16379:6379"
+#    volumes:
+#      - ./redis/redis.conf:/etc/redis.conf:ro
+#      - ./redis/data:/data/:rw
+#    entrypoint: [ "redis-server", "/etc/redis.conf" ]
     restart: always
-    entrypoint: [ "redis-server", "/etc/redis.conf" ]
     networks:
       - go_im
   mysql:
@@ -42,6 +42,52 @@ services:
       MYSQL_ROOT_PASSWORD: "123456"
       MYSQL_ROOT_HOST: "%"
       TZ: "Asia/Shanghai"
+  gateway:
+    image: goim/gateway
+#    build:
+#      context: ../deployment/gateway
+#      dockerfile: Dockerfile
+    container_name: gateway
+    ports:
+      - "9001:9001"
+    volumes:
+      - ../static:/static:rw
+    restart: always
+    depends_on:
+      - consul
+      - redis
+      - mysql
+    networks:
+      - go_im
+  im_server1:
+    image: goim/service
+#    build:
+#      context: ../deployment/service
+#      dockerfile: Dockerfile
+    container_name: im_server1
+    command: -a "im_server1:8080"
+    ports:
+      - "8080:8080"
+    restart: always
+    depends_on:
+      - consul
+      - redis
+      - mysql
+    networks:
+      - go_im
+  im_server2:
+    image: goim/service
+    container_name: im_server2
+    command: -a "im_server2:8081"
+    ports:
+      - "8081:8081"
+    restart: always
+    depends_on:
+      - consul
+      - redis
+      - mysql
+    networks:
+      - go_im
 networks:
   go_im:
     driver: bridge

@@ -5,7 +5,7 @@ import (
 	"github.com/gorilla/websocket"
 	"go-im/internal/connect/repo"
 	"go-im/pkg/logger"
-	util "go-im/pkg/util"
+	"go-im/pkg/util"
 	"go.uber.org/zap"
 	"io"
 	"strings"
@@ -210,7 +210,12 @@ func (n *Node) handleCreateRoom(data *Input) {
 	}
 
 	// 房间已存在，返回错误信息
-	if !repo.RoomCache.Create(n.UserId, roomName) {
+	isCreate, err := repo.RoomCache.Create(n.UserId, roomName)
+	if err != nil {
+		n.sendErrorMsg(data.RequestId, MethodCreateRoom, CodeError, "创建房间失败，请稍后再试。")
+		return
+	}
+	if isCreate {
 		n.sendErrorMsg(data.RequestId, MethodCreateRoom, CodeValidateError, "您已创建房间，不能重复创建")
 		return
 	}

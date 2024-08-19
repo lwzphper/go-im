@@ -2,10 +2,11 @@ package repo
 
 import (
 	"context"
+	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 	"go-im/pkg/logger"
 	pkgRedis "go-im/pkg/redis"
-	util "go-im/pkg/util"
+	"go-im/pkg/util"
 	"go.uber.org/zap"
 )
 
@@ -29,7 +30,7 @@ func (r *roomCache) List() map[string]string {
 }
 
 // 创建房间
-func (r *roomCache) Create(roomId uint64, roomName string) bool {
+func (r *roomCache) Create(roomId uint64, roomName string) (bool, error) {
 	script := `
 	local value = redis.call("HEXISTS", KEYS[1], ARGV[1])
 		if( value == 0 ) then
@@ -40,12 +41,13 @@ func (r *roomCache) Create(roomId uint64, roomName string) bool {
 	result, err := redis.NewScript(script).Run(context.Background(), r.c().Conn(), []string{cacheKeyCreateRoomId}, roomId, roomName).Result()
 	if err != nil {
 		logger.Error("create room lua script error", zap.Error(err))
+		return false, errors.New("create room error")
 	}
 	ret := result.(int64)
 	if ret == 1 {
-		return true
+		return true, nil
 	}
-	return false
+	return false, nil
 }
 
 // 删除房间

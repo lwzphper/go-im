@@ -5,7 +5,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go-im/pkg/logger"
 	pkgRedis "go-im/pkg/redis"
-	util "go-im/pkg/util"
+	"go-im/pkg/util"
 	"go.uber.org/zap"
 )
 

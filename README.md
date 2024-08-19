@@ -6,11 +6,27 @@
 
 ------------
 
-部署流程，后面再完善
+#### 方式一、docker
+
+项目根目录执行下面指令：
 
 ```shell
-# 安装依赖(redis、mysql、consul 都是使用默认端口，如果与本地的服务冲突，需要修改端口)
-docker-compose up -f docker/docker-comopse.yml -d 
+# 构建 gateway 镜像
+docker build -t goim/gateway -f ./deployment/gateway/Dockerfile .
+# 构建 service 镜像
+docker build -t goim/service -f ./deployment/service/Dockerfile .
+
+# 启动容器
+docker-compose up -f docker/docker-comopse.yml -d
+```
+
+#### 方式二、手动安装
+
+安装依赖，如果已安装直接跳过
+
+```shell
+# redis、mysql、consul 都是使用默认端口，如果与本地的服务冲突，需要修改端口
+docker-compose -f docker/docker-compose.yml up -d 
 ```
 
 ```shell
@@ -25,6 +41,8 @@ go build -o ./dist/gateway ./cmd/gateway/main.go
 ./dist/service -a :8080
 ./dist/service -a :8081
 ```
+
+#### 启动
 
 前端地址：http://127.0.0.1:9001/
 

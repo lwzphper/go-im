@@ -7,7 +7,7 @@ import (
 	"go-im/internal/gateway/domain/user/service"
 	"go-im/pkg/jwt"
 	"go-im/pkg/response"
-	util "go-im/pkg/util"
+	"go-im/pkg/util"
 	"time"
 )
 

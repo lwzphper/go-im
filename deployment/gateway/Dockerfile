@@ -1,5 +1,5 @@
 # 启动编译环境
-FROM golang:1.21.6-alpine3.19 AS builder
+FROM golang:1.23-alpine AS builder
 
 # 配置编译环境
 RUN go env -w GO111MODULE=on
@@ -14,9 +14,9 @@ RUN go mod tidy
 RUN go build -o /go/bin/gateway ./cmd/gateway/main.go
 
 
-FROM alpine:3.13
+FROM alpine:3.19
 COPY --from=builder /go/bin/gateway /bin/gateway
-ENV ADDR=:9001
+ENV GATEWAY_ADDR=:9001
 
 # 申明暴露的端口
 EXPOSE 9001

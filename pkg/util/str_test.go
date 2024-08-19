@@ -22,6 +22,13 @@ func TestSplitAddress(t *testing.T) {
 			wantErr:  false,
 		},
 		{
+			name:     "address with port",
+			addr:     "mysql:8080",
+			wantHost: "mysql",
+			wantPort: 8080,
+			wantErr:  false,
+		},
+		{
 			name:     "address without port",
 			addr:     "127.0.0.1",
 			wantHost: "127.0.0.1",
@@ -54,6 +61,42 @@ func TestSplitAddress(t *testing.T) {
 			}
 			assert.Equal(t, c.wantHost, ipHost.Host)
 			assert.Equal(t, c.wantPort, ipHost.Port)
+		})
+	}
+}
+
+func TestCheckIsIp(t *testing.T) {
+	cases := []struct {
+		name string
+		ip   string
+		want bool
+	}{
+		{
+			name: "ipv4",
+			ip:   "127.0.0.1",
+			want: true,
+		},
+		{
+			name: "ipv6",
+			ip:   "::1",
+			want: true,
+		},
+		{
+			name: "invalid ip1",
+			ip:   "127.0.0.1:8080",
+			want: false,
+		},
+		{
+			name: "invalid ip2",
+			ip:   "host.docker.internal",
+			want: false,
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if CheckIsIp(c.ip) != c.want {
+				t.Errorf("want error %v, got %v", c.want, !c.want)
+			}
 		})
 	}
 }

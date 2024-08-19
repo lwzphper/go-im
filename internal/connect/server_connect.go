@@ -1,6 +1,5 @@
 package connect
 
-import "C"
 import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
@@ -35,6 +34,11 @@ var upgrader = websocket.Upgrader{
 type WsConn struct {
 	address  string
 	serverId string // 服务id，用于 consul 注册
+}
+
+func InitServer(c *WsConn, addr string) {
+	c = NewWsConn(addr)
+	go c.StartServer()
 }
 
 func NewWsConn(address string) *WsConn {
@@ -121,33 +125,6 @@ func (c *WsConn) handleGatewayConn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger.Debugf("网关已连接")
-
-	// 心跳检测
-	/*go func() {
-		ticker := time.NewTicker(pingPeriod)
-		defer func() {
-			ticker.Stop()
-			wsConn.Close()
-		}()
-
-		errTime := 0
-
-		for {
-			select {
-			case <-ticker.C:
-				logger.Debugf("IMServer网关心跳检测")
-				_ = wsConn.SetWriteDeadline(time.Now().Add(writeWait))
-				if err := wsConn.WriteMessage(websocket.PingMessage, nil); err != nil {
-					logger.Error("网关 ping", zap.Error(err))
-					if errTime > 3 {
-						logger.Info("网关心跳健康检测失败，断开连接")
-						return
-					}
-					errTime++
-				}
-			}
-		}
-	}()*/
 
 	// 消息处理
 	for {
