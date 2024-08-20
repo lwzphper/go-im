@@ -169,9 +169,7 @@ func (c *WsConn) handleGatewayConn(w http.ResponseWriter, r *http.Request) {
 			PushAll(data)
 		default:
 			// 推送当前服务指定房间的全部用户
-			if room := GetRoom(data.RoomId); room != nil {
-				room.Push(data)
-			}
+			c.roomApp.SendRoomMsg(data.RoomId, data)
 		}
 	}
 }

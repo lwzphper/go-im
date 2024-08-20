@@ -19,6 +19,11 @@ type RoomApp struct {
 	strategy    msgStrategy
 }
 
+// 发送房间消息
+func (r *RoomApp) SendRoomMsg(roomId uint64, data *room.QueueMsgData) {
+	r.roomService.SendRoomMsg(roomId, data)
+}
+
 // 分发消息
 func (r *RoomApp) Dispatch(n *connect.Node, message []byte) {
 	data, err := room.UnMarshalInput(message)

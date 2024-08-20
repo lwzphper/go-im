@@ -37,8 +37,8 @@ type IService interface {
 	UserList(n *connect.Node, data *room.Input)
 	// 一对一消息
 	Normal(n *connect.Node, data *room.Input)
-	// 发送当前房间链接的消息
-	ServerRoomMsg(n *connect.Node, data *room.Input)
+	// 发送房间消息
+	SendRoomMsg(roomId uint64, data *room.QueueMsgData)
 	// 关闭操作
 	Close(n *connect.Node)
 }
