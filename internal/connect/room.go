@@ -2,7 +2,8 @@ package connect
 
 import (
 	"github.com/redis/go-redis/v9"
-	"go-im/internal/connect/repo"
+	"go-im/internal/logic/room"
+	repo2 "go-im/internal/logic/room/repo"
 	"go-im/pkg/logger"
 	pkgRedis "go-im/pkg/redis"
 	"go-im/pkg/util"
@@ -11,7 +12,7 @@ import (
 
 var (
 	roomsManager = make(map[uint64]*Room)
-	roomLock     sync.Mutex
+	newRoomLock  sync.Mutex
 )
 
 // GetRoom 获取房间
@@ -21,7 +22,7 @@ func GetRoom(roomId uint64) *Room {
 	}
 
 	// 本机不存在，判断其他服务是否已创建房间
-	if roomName := repo.RoomCache.GetName(roomId); roomName != "" {
+	if roomName := repo2.RoomCache.GetName(roomId); roomName != "" {
 		return newRoom(roomId, roomName)
 	}
 
@@ -30,8 +31,8 @@ func GetRoom(roomId uint64) *Room {
 
 // 新建房间
 func newRoom(roomId uint64, name string) *Room {
-	roomLock.Lock()
-	defer roomLock.Unlock()
+	newRoomLock.Lock()
+	defer newRoomLock.Unlock()
 
 	if r, ok := roomsManager[roomId]; ok {
 		return r
@@ -60,8 +61,8 @@ func (r *Room) Join(conn *Node, username string) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
-	repo.RoomUserCache.Create(r.RoomId, conn.UserId, username)
-	repo.UserServiceCache.Create(r.RoomId, conn.UserId, conn.ServerAddr)
+	repo2.RoomUserCache.Create(r.RoomId, conn.UserId, username)
+	repo2.UserServiceCache.Create(r.RoomId, conn.UserId, conn.ServerAddr)
 
 	if _, ok := r.clients[conn.UserId]; !ok {
 		r.clients[conn.UserId] = conn
@@ -74,8 +75,8 @@ func (r *Room) Leave(conn *Node) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
-	repo.RoomUserCache.Remove(r.RoomId, conn.UserId)
-	repo.UserServiceCache.Remove(r.RoomId, conn.UserId)
+	repo2.RoomUserCache.Remove(r.RoomId, conn.UserId)
+	repo2.UserServiceCache.Remove(r.RoomId, conn.UserId)
 	delete(r.clients, conn.UserId)
 
 	conn.RoomId = 0
@@ -90,14 +91,14 @@ func (r *Room) Close() {
 		node.Close()
 	}
 
-	repo.UserServiceCache.DeleteRoom(r.RoomId)
-	repo.RoomUserCache.DeleteRoom(r.RoomId)
-	repo.RoomCache.Remove(r.RoomId)
+	repo2.UserServiceCache.DeleteRoom(r.RoomId)
+	repo2.RoomUserCache.DeleteRoom(r.RoomId)
+	repo2.RoomCache.Remove(r.RoomId)
 	delete(roomsManager, r.RoomId)
 }
 
 // Push 推送消息到房间
-func (r *Room) Push(data *QueueMsgData) {
+func (r *Room) Push(data *room.QueueMsgData) {
 	r.lock.Lock()
 	defer func() {
 		r.lock.Unlock()
@@ -115,14 +116,14 @@ func (r *Room) Push(data *QueueMsgData) {
 }
 
 // 获取房间用户列表
-func (r *Room) getUserList() UserList {
-	userIdNameMap := repo.RoomUserCache.GetAll(r.RoomId)
+func (r *Room) getUserList() room.UserList {
+	userIdNameMap := repo2.RoomUserCache.GetAll(r.RoomId)
 
-	var userData = UserList{}
+	var userData = room.UserList{}
 	for userId, name := range userIdNameMap {
 		uid, _ := util.StringToUint64(userId)
 		if uid > 0 {
-			userData = append(userData, UserItem{
+			userData = append(userData, room.UserItem{
 				Id:   uid,
 				Name: name,
 			})
@@ -133,5 +134,5 @@ func (r *Room) getUserList() UserList {
 
 // CheckUserIsLogin 判断用户是否已登录
 func (r *Room) CheckUserIsLogin(userId uint64) bool {
-	return repo.RoomUserCache.Exists(r.RoomId, userId)
+	return repo2.RoomUserCache.Exists(r.RoomId, userId)
 }

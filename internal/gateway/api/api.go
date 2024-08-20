@@ -3,7 +3,7 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"go-im/internal/gateway/api/middleware"
-	"go-im/internal/gateway/domain/user/app"
+	"go-im/internal/logic/user/app"
 )
 
 func RegisterUser(r *gin.RouterGroup) {

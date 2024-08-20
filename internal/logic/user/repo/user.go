@@ -3,8 +3,8 @@ package repo
 import (
 	"context"
 	"github.com/pkg/errors"
-	"go-im/internal/gateway/domain/user"
-	"go-im/internal/gateway/domain/user/model"
+	"go-im/internal/logic/user"
+	"go-im/internal/logic/user/model"
 	"go-im/pkg/mysql"
 	"go-im/pkg/util"
 	"gorm.io/gorm"

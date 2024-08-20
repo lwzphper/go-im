@@ -5,6 +5,8 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/rs/xid"
 	"go-im/config"
+	"go-im/internal/logic/room"
+	"go-im/internal/logic/room/app"
 	"go-im/pkg/errorx"
 	"go-im/pkg/jwt"
 	"go-im/pkg/logger"
@@ -34,6 +36,7 @@ var upgrader = websocket.Upgrader{
 type WsConn struct {
 	address  string
 	serverId string // 服务id，用于 consul 注册
+	roomApp  *app.RoomApp
 }
 
 func InitServer(addr string) *WsConn {
@@ -48,6 +51,7 @@ func NewWsConn(address string) *WsConn {
 	return &WsConn{
 		address:  address,
 		serverId: config.C.App.Name + "_" + guid.String(),
+		roomApp:  app.NewRoomApp().Init(),
 	}
 }
 
@@ -96,7 +100,7 @@ func (c *WsConn) handleConn(w http.ResponseWriter, r *http.Request) {
 	// 用户授权
 	userId, err := c.auth(r)
 	if err != nil {
-		OutputError(wsConn, CodeAuthError, errorx.Message(err))
+		OutputError(wsConn, room.CodeAuthError, errorx.Message(err))
 		_ = wsConn.Close()
 		return
 	}
@@ -105,7 +109,7 @@ func (c *WsConn) handleConn(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	NewNode(wsConn, userId, addr.String(), c.serverId, WithNodeLoginTime(time.Now().Unix()))
+	NewNode(wsConn, userId, addr.String(), c.serverId, c.roomApp, WithNodeLoginTime(time.Now().Unix()))
 }
 
 // 处理网关连接
@@ -120,7 +124,7 @@ func (c *WsConn) handleGatewayConn(w http.ResponseWriter, r *http.Request) {
 
 	// 权限判断
 	if r.URL.Query().Get(config.GatewayAuthKey) != config.GatewayAuthVal {
-		writeTextMessage(wsConn, MethodServiceNotice, "无权操作")
+		writeTextMessage(wsConn, room.MethodServiceNotice, "无权操作")
 		_ = wsConn.Close()
 		return
 	}
@@ -148,21 +152,21 @@ func (c *WsConn) handleGatewayConn(w http.ResponseWriter, r *http.Request) {
 
 		logger.Debugf("接收到网关数据：%s", string(message))
 
-		var data = new(QueueMsgData)
+		var data = new(room.QueueMsgData)
 		err = json.Unmarshal(message, data)
 		if err != nil {
 			logger.Infof("网关消息格式有误：%s", string(message))
-			writeTextMessage(wsConn, MethodServiceNotice, "消息格式有误")
+			writeTextMessage(wsConn, room.MethodServiceNotice, "消息格式有误")
 			continue
 		}
 
 		switch data.Method {
-		case MethodNormal: // 普通消息。发送指定用户
+		case room.MethodNormal: // 普通消息。发送指定用户
 			if node := GetNode(data.ToUid); node != nil {
 				node.DataQueue <- data
 			}
-		case MethodCreateRoomNotice: // 创建房间
-			pushAll(data)
+		case room.MethodCreateRoomNotice: // 创建房间
+			PushAll(data)
 		default:
 			// 推送当前服务指定房间的全部用户
 			if room := GetRoom(data.RoomId); room != nil {

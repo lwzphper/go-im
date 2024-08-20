@@ -27,6 +27,8 @@ docker-compose up -f docker/docker-comopse.yml -d
 
 需要自行安装依赖的中间件：redis、mysql、consul。并修改 `./etc/config.yaml` 对应的地址、端口
 
+执行sql文件： `docker/mysql/sql/sql.sql` 
+
 ```shell
 # 编译
 go mod tidy

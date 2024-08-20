@@ -3,8 +3,8 @@ package app
 import (
 	"github.com/gin-gonic/gin"
 	"go-im/config"
-	"go-im/internal/gateway/domain/user"
-	"go-im/internal/gateway/domain/user/service"
+	"go-im/internal/logic/user"
+	"go-im/internal/logic/user/service"
 	"go-im/pkg/jwt"
 	"go-im/pkg/response"
 	"go-im/pkg/util"
@@ -18,7 +18,7 @@ func NewAuthApp() *AuthApp {
 }
 
 type AuthApp struct {
-	userServer service.IUserService
+	userServer service.IService
 }
 
 // LoginRegister 登录，如果账号不存在，自动注册

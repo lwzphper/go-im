@@ -16,7 +16,7 @@ type GatewayClient struct {
 }
 
 // 获取客户端
-func getGatewayClient() *websocket.Conn {
+func GetGatewayClient() *websocket.Conn {
 	var err error
 	if gatewayClient == nil {
 		gatewayClient = gatewayDail()

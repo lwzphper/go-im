@@ -1,6 +1,7 @@
 package connect
 
 import (
+	"go-im/internal/logic/room"
 	"sync"
 )
 
@@ -26,7 +27,7 @@ func DeleteNode(userId uint64) {
 }
 
 // 广播消息
-func pushAll(data *QueueMsgData) {
+func PushAll(data *room.QueueMsgData) {
 	NodesManger.Range(func(key, value any) bool {
 		node := value.(*Node)
 		node.DataQueue <- data

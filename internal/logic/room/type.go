@@ -1,4 +1,4 @@
-package connect
+package room
 
 import (
 	"encoding/json"
