@@ -11,6 +11,9 @@
 项目根目录执行下面指令：
 
 ```shell
+# 删除旧的镜像
+docker rmi goim/gateway
+docker rmi goim/service
 # 构建 gateway 镜像
 docker build -t goim/gateway -f ./deployment/gateway/Dockerfile .
 # 构建 service 镜像
