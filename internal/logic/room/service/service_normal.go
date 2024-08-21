@@ -6,11 +6,11 @@ import (
 )
 
 // 一对一消息
-func (s *Service) normal(userId uint64, data *roomType.Input) {
-	n := connect.GetNode(userId)
+func (s *Service) normal(n *connect.Node, data *roomType.Input) {
+	/*n := connect.GetNode(userId)
 	if n == nil {
 		return
-	}
+	}*/
 
 	if data.ToUid == 0 {
 		s.sendErrorMsg(n, data.RequestId, roomType.MethodNormal, roomType.CodeValidateError, "未选择发送的用户")

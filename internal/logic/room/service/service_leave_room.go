@@ -7,11 +7,11 @@ import (
 )
 
 // 离开房间
-func (s *Service) leaveRoom(userId uint64, data *roomType.Input) {
-	n := connect.GetNode(userId)
+func (s *Service) leaveRoom(n *connect.Node, data *roomType.Input) {
+	/*n := connect.GetNode(userId)
 	if n == nil {
 		return
-	}
+	}*/
 	// 下线广播
 	s.offlineNotify(n)
 

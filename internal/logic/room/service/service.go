@@ -18,7 +18,7 @@ func NewService() *Service {
 		userServiceCache: repo.NewUserServiceCache(),
 		roomCache:        repo.NewRoomCache(),
 		roomsManager:     make(map[uint64]*Room),
-		strategy:         types.MsgStrategy{},
+		strategy:         MsgStrategy{},
 	}
 
 	srv.strategy.Register(types.MethodCreateRoom, srv.create)
@@ -51,7 +51,7 @@ type Service struct {
 	roomCache        *repo.RoomCache
 	roomsManager     map[uint64]*Room
 	newRoomLock      sync.Mutex
-	strategy         types.MsgStrategy
+	strategy         MsgStrategy
 }
 
 type Room struct {

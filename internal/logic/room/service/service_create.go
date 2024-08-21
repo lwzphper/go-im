@@ -6,11 +6,11 @@ import (
 )
 
 // 创建房间
-func (s *Service) create(userId uint64, data *types.Input) {
-	n := connect.GetNode(userId)
-	if n == nil {
-		return
-	}
+func (s *Service) create(n *connect.Node, data *types.Input) {
+	//n := connect.GetNode(userId)
+	//if n == nil {
+	//	return
+	//}
 	roomId := n.UserId // 房间id，使用用户id创建，为了简化判断逻辑。一个用户只能创建一个群聊
 
 	roomName, ok := data.Data.(string)

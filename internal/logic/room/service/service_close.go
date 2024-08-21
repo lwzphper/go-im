@@ -15,6 +15,6 @@ func (s *Service) Close(userId uint64) {
 		s.roomUserCache.Remove(n.RoomId, n.UserId)
 		s.userServiceCache.Remove(n.RoomId, n.UserId)
 
-		s.leaveRoom(n.UserId, nil)
+		s.leaveRoom(n, nil)
 	}
 }

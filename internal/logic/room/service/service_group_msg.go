@@ -6,11 +6,11 @@ import (
 )
 
 // 群聊消息
-func (s *Service) groupMsg(userId uint64, data *types.Input) {
-	n := connect.GetNode(userId)
+func (s *Service) groupMsg(n *connect.Node, data *types.Input) {
+	/*n := connect.GetNode(userId)
 	if n == nil {
 		return
-	}
+	}*/
 	if s.allServiceRoomMsg(n, data) {
 		s.ack(n, data)
 	}

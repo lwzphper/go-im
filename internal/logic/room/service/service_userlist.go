@@ -6,11 +6,11 @@ import (
 )
 
 // 获取房间用户列表
-func (s *Service) userList(userId uint64, data *roomType.Input) {
-	n := connect.GetNode(userId)
+func (s *Service) userList(n *connect.Node, data *roomType.Input) {
+	/*n := connect.GetNode(userId)
 	if n == nil {
 		return
-	}
+	}*/
 	if !s.isInRoom(n, data.RoomId) {
 		s.sendErrorMsg(n, data.RequestId, roomType.MethodRoomUser, roomType.CodeValidateError, "请选择房间或群组")
 		return

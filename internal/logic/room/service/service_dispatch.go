@@ -32,5 +32,5 @@ func (s *Service) Dispatch(userId uint64, message []byte) {
 		return
 	}
 
-	method(n.UserId, data)
+	method(n, data)
 }
