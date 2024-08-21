@@ -3,8 +3,8 @@ package connect
 import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
-	"go-im/internal/event"
 	"go-im/internal/logic/room/types"
+	"go-im/internal/pkg/event"
 	"go-im/pkg/logger"
 	"go-im/pkg/util"
 	"go.uber.org/zap"
@@ -110,7 +110,7 @@ func CloseConn(n *Node) {
 	// 删除用户连接映射
 	DeleteNode(n.UserId)
 
-	event.RoomEvent.PushCloseConn(n)
+	event.RoomEvent.PushCloseConn(n.UserId)
 
 	logger.Debugf("用户：%d 程序已关闭连接", n.UserId)
 }

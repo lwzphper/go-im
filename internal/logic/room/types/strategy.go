@@ -1,10 +1,6 @@
 package types
 
-import (
-	"go-im/internal/connect"
-)
-
-type MsgHandler func(n *connect.Node, data *Input)
+type MsgHandler func(userId uint64, data *Input)
 
 type MsgStrategy map[MsgMethod]MsgHandler
 

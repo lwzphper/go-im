@@ -6,7 +6,11 @@ import (
 )
 
 // 加入房间
-func (s *Service) join(n *connect.Node, data *roomType.Input) {
+func (s *Service) join(userId uint64, data *roomType.Input) {
+	n := connect.GetNode(userId)
+	if n == nil {
+		return
+	}
 	if data.RoomId == 0 {
 		s.sendErrorMsg(n, data.RequestId, roomType.MethodJoinRoom, roomType.CodeValidateError, "请选择房间或群组")
 		return

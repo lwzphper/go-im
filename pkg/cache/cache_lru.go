@@ -40,7 +40,7 @@ func (l *LruCache) Get(k any) (any, bool) {
 	v, ok := l.cacheMap[k]
 	if ok {
 		l.values.MoveToFront(v)
-		return v, true
+		return v.Value, true
 	} else {
 		return nil, false
 	}

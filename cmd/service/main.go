@@ -4,6 +4,7 @@ import (
 	"flag"
 	"go-im/config"
 	"go-im/internal/connect"
+	"go-im/internal/logic/room/app"
 	"go-im/pkg/logger"
 	"go-im/pkg/server"
 	"go-im/pkg/util/consul"
@@ -30,6 +31,9 @@ func main() {
 	// 解决 internal 目录不能外部引用问题
 	var conn *connect.WsConn
 	conn = connect.InitServer(*addr)
+
+	// 初始化服务
+	app.Init()
 
 	hook := server.NewHook()
 	hook.Close(func(sg os.Signal) {

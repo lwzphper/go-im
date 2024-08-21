@@ -4,8 +4,8 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/rs/xid"
 	"go-im/config"
-	"go-im/internal/event"
 	"go-im/internal/logic/room/types"
+	"go-im/internal/pkg/event"
 	"go-im/pkg/errorx"
 	"go-im/pkg/jwt"
 	"go-im/pkg/logger"
@@ -135,7 +135,7 @@ func (c *WsConn) handleRead(n *Node) {
 		//message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 		logger.Debugf("接收到 userId:%d 数据：%s", n.UserId, string(message))
 
-		event.RoomEvent.PushReadMsg(n, message)
+		event.RoomEvent.PushReadMsg(n.UserId, message)
 	}
 }
 

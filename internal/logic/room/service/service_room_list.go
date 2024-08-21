@@ -1,7 +1,7 @@
 package service
 
 import (
-	types2 "go-im/internal/connect"
+	"go-im/internal/connect"
 	"go-im/internal/logic/room/types"
 	"go-im/pkg/logger"
 	"go-im/pkg/util"
@@ -9,7 +9,11 @@ import (
 )
 
 // 房间列表
-func (s *Service) roomList(n *types2.Node, data *types.Input) {
+func (s *Service) roomList(userId uint64, data *types.Input) {
+	n := connect.GetNode(userId)
+	if n == nil {
+		return
+	}
 	list := s.roomCache.List()
 
 	var result = types.RoomList{}

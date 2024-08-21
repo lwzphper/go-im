@@ -7,7 +7,12 @@ import (
 )
 
 // 分发消息
-func (s *Service) Dispatch(n *types2.Node, message []byte) {
+func (s *Service) Dispatch(userId uint64, message []byte) {
+	n := types2.GetNode(userId)
+	if n == nil {
+		return
+	}
+
 	data, err := types.UnMarshalInput(message)
 	if err != nil {
 		logger.Infof("用户：%d 消息格式有误：%s", n.UserId, string(message))
@@ -26,5 +31,5 @@ func (s *Service) Dispatch(n *types2.Node, message []byte) {
 		return
 	}
 
-	method(n, data)
+	method(n.UserId, data)
 }
