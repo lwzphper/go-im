@@ -4,6 +4,7 @@ import (
 	"flag"
 	"go-im/config"
 	"go-im/internal/connect"
+	"go-im/internal/types"
 	"go-im/pkg/logger"
 	"go-im/pkg/server"
 	"go-im/pkg/util/consul"
@@ -37,7 +38,7 @@ func main() {
 		conn.Close()
 		// 关闭当前服务的全部连接
 		connect.NodesManger.Range(func(userId, node any) bool {
-			node.(*connect.Node).Close()
+			connect.CloseConn(node.(*types.Node))
 			return true
 		})
 		logger.Info("Server exiting")

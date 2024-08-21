@@ -5,7 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"go-im/config"
-	"go-im/internal/logic/room"
+	"go-im/internal/logic/room/types"
 	"go-im/pkg/logger"
 	"go.uber.org/zap"
 	"log"
@@ -33,7 +33,7 @@ func Handle(c *gin.Context) {
 	// 校验
 	if c.Query(config.GatewayAuthKey) != config.GatewayAuthVal {
 		logger.Debug("auth key 不合法", zap.String("auth key", c.Query(config.GatewayAuthKey)))
-		wsConn.WriteMessage(websocket.TextMessage, room.MarshalOutput(room.MethodServiceNotice, "无权操作", 0))
+		wsConn.WriteMessage(websocket.TextMessage, types.MarshalOutput(types.MethodServiceNotice, "无权操作", 0))
 		return
 	}
 
@@ -51,11 +51,11 @@ func Handle(c *gin.Context) {
 			return
 		}
 
-		var data = new(room.QueueMsgData)
+		var data = new(types.QueueMsgData)
 		err = json.Unmarshal(message, data)
 		if err != nil {
 			logger.Infof("IMServer消息格式有误：%s", string(message))
-			_ = wsConn.WriteMessage(websocket.TextMessage, room.MarshalOutput(room.MethodServiceNotice, "消息格式有误", 0))
+			_ = wsConn.WriteMessage(websocket.TextMessage, types.MarshalOutput(types.MethodServiceNotice, "消息格式有误", 0))
 			continue
 		}
 

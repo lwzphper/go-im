@@ -5,7 +5,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/hashicorp/consul/api"
 	"go-im/config"
-	"go-im/internal/logic/room"
+	"go-im/internal/logic/room/types"
 	"go-im/pkg/logger"
 	"go-im/pkg/util/consul"
 	"go.uber.org/zap"
@@ -59,7 +59,7 @@ func Init() {
 	client = &MsgProxy{
 		conns:         getHealthImServiceConn(),
 		serviceChange: make(chan []*api.AgentService, 1),
-		proxyMsg:      make(chan *room.QueueMsgData, MaxChannelSize),
+		proxyMsg:      make(chan *types.QueueMsgData, MaxChannelSize),
 	}
 
 	go client.Write()
@@ -68,11 +68,11 @@ func Init() {
 type MsgProxy struct {
 	conns         map[string]*connInfo
 	serviceChange chan []*api.AgentService // 服务器变更通知
-	proxyMsg      chan *room.QueueMsgData  // 代理消息
+	proxyMsg      chan *types.QueueMsgData // 代理消息
 }
 
 // Send 发送消息
-func (p *MsgProxy) Send(data *room.QueueMsgData) {
+func (p *MsgProxy) Send(data *types.QueueMsgData) {
 	p.proxyMsg <- data
 }
 

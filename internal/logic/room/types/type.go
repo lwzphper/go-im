@@ -1,4 +1,4 @@
-package room
+package types
 
 import (
 	"encoding/json"
@@ -54,68 +54,6 @@ const (
 	MethodServiceAck                           // 确认消息
 	MethodNewRoomNotice                        // 新建房间通知
 )
-
-// 用户列表
-type UserList []UserItem
-
-func (u *UserList) Marshal() string {
-	result, err := json.Marshal(u)
-	if err != nil {
-		logger.Error("userList marshal error", zap.Error(err))
-		return ""
-	}
-	return string(result)
-}
-
-type UserItem struct {
-	Id   uint64 `json:"id"`
-	Name string `json:"name"`
-}
-
-// 创建房间结果
-type CreateRoomResult struct {
-	RoomId uint64 `json:"room_id"`
-}
-
-func (c *CreateRoomResult) Marshal() string {
-	result, err := json.Marshal(c)
-	if err != nil {
-		logger.Error("CreateRoomResult marshal error", zap.Error(err))
-		return ""
-	}
-	return string(result)
-}
-
-type RoomList []RoomInfo
-
-type RoomInfo struct {
-	Id   uint64 `json:"id"`
-	Name string `json:"name"`
-}
-
-func (i *RoomList) Marshal() string {
-	result, err := json.Marshal(i)
-	if err != nil {
-		logger.Error("RoomList marshal error", zap.Error(err))
-		return ""
-	}
-	return string(result)
-}
-
-// 上行数据
-type Input struct {
-	RequestId string `json:"request_id,omitempty"` // 消息id
-	Method    uint8  `json:"method"`               // 调用方法
-	Data      any    `json:"data"`                 // 传递的消息
-	RoomId    uint64 `json:"room_id,omitempty"`    // 房间id
-	ToUid     uint64 `json:"to_uid,omitempty"`     // 消息接收者
-	FromUid   uint64 `json:"from_uid,omitempty"`   // 消息代理时传递
-}
-
-func (i *Input) Marshal() []byte {
-	result, _ := json.Marshal(i)
-	return result
-}
 
 // 队列数据
 type QueueMsgData struct {
@@ -180,6 +118,21 @@ func MarshalOutput(m MsgMethod, data string, FromUid uint64) []byte {
 	return result.Marshal()
 }
 
+// 上行数据
+type Input struct {
+	RequestId string `json:"request_id,omitempty"` // 消息id
+	Method    uint8  `json:"method"`               // 调用方法
+	Data      any    `json:"data"`                 // 传递的消息
+	RoomId    uint64 `json:"room_id,omitempty"`    // 房间id
+	ToUid     uint64 `json:"to_uid,omitempty"`     // 消息接收者
+	FromUid   uint64 `json:"from_uid,omitempty"`   // 消息代理时传递
+}
+
+func (i *Input) Marshal() []byte {
+	result, _ := json.Marshal(i)
+	return result
+}
+
 // MarshalSystemOutput 序列化消息系统下行消息
 func MarshalSystemOutput(m MsgMethod, msg string) []byte {
 	return MarshalOutput(m, msg, 0)
@@ -194,4 +147,51 @@ func UnMarshalInput(data []byte) (*Input, error) {
 	}
 
 	return ret, nil
+}
+
+// 用户列表
+type UserList []UserItem
+
+func (u *UserList) Marshal() string {
+	result, err := json.Marshal(u)
+	if err != nil {
+		logger.Error("userList marshal error", zap.Error(err))
+		return ""
+	}
+	return string(result)
+}
+
+type UserItem struct {
+	Id   uint64 `json:"id"`
+	Name string `json:"name"`
+}
+
+// 创建房间结果
+type CreateRoomResult struct {
+	RoomId uint64 `json:"room_id"`
+}
+
+func (c *CreateRoomResult) Marshal() string {
+	result, err := json.Marshal(c)
+	if err != nil {
+		logger.Error("CreateRoomResult marshal error", zap.Error(err))
+		return ""
+	}
+	return string(result)
+}
+
+type RoomList []RoomInfo
+
+type RoomInfo struct {
+	Id   uint64 `json:"id"`
+	Name string `json:"name"`
+}
+
+func (i *RoomList) Marshal() string {
+	result, err := json.Marshal(i)
+	if err != nil {
+		logger.Error("roomList marshal error", zap.Error(err))
+		return ""
+	}
+	return string(result)
 }

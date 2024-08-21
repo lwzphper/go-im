@@ -1,12 +1,12 @@
 package service
 
 import (
-	"go-im/internal/connect"
-	roomType "go-im/internal/logic/room"
+	roomType "go-im/internal/logic/room/types"
+	"go-im/internal/types"
 )
 
 // 加入房间
-func (s *Service) Join(n *connect.Node, data *roomType.Input) {
+func (s *Service) join(n *types.Node, data *roomType.Input) {
 	if data.RoomId == 0 {
 		s.sendErrorMsg(n, data.RequestId, roomType.MethodJoinRoom, roomType.CodeValidateError, "请选择房间或群组")
 		return

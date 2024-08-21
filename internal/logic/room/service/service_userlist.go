@@ -1,12 +1,12 @@
 package service
 
 import (
-	"go-im/internal/connect"
-	roomType "go-im/internal/logic/room"
+	roomType "go-im/internal/logic/room/types"
+	"go-im/internal/types"
 )
 
-// UserList 获取房间用户列表
-func (s *Service) UserList(n *connect.Node, data *roomType.Input) {
+// 获取房间用户列表
+func (s *Service) userList(n *types.Node, data *roomType.Input) {
 	if !s.isInRoom(n, data.RoomId) {
 		s.sendErrorMsg(n, data.RequestId, roomType.MethodRoomUser, roomType.CodeValidateError, "请选择房间或群组")
 		return

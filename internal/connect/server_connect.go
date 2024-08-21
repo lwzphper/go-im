@@ -1,12 +1,12 @@
 package connect
 
 import (
-	"encoding/json"
 	"github.com/gorilla/websocket"
 	"github.com/rs/xid"
 	"go-im/config"
-	"go-im/internal/logic/room"
-	"go-im/internal/logic/room/app"
+	"go-im/internal/event"
+	"go-im/internal/logic/room/types"
+	types2 "go-im/internal/types"
 	"go-im/pkg/errorx"
 	"go-im/pkg/jwt"
 	"go-im/pkg/logger"
@@ -36,7 +36,6 @@ var upgrader = websocket.Upgrader{
 type WsConn struct {
 	address  string
 	serverId string // 服务id，用于 consul 注册
-	roomApp  *app.RoomApp
 }
 
 func InitServer(addr string) *WsConn {
@@ -51,7 +50,6 @@ func NewWsConn(address string) *WsConn {
 	return &WsConn{
 		address:  address,
 		serverId: config.C.App.Name + "_" + guid.String(),
-		roomApp:  app.NewRoomApp().Init(),
 	}
 }
 
@@ -100,7 +98,7 @@ func (c *WsConn) handleConn(w http.ResponseWriter, r *http.Request) {
 	// 用户授权
 	userId, err := c.auth(r)
 	if err != nil {
-		OutputError(wsConn, room.CodeAuthError, errorx.Message(err))
+		OutputError(wsConn, types.CodeAuthError, errorx.Message(err))
 		_ = wsConn.Close()
 		return
 	}
@@ -109,7 +107,122 @@ func (c *WsConn) handleConn(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	NewNode(wsConn, userId, addr.String(), c.serverId, c.roomApp, WithNodeLoginTime(time.Now().Unix()))
+	node := types2.NewNode(wsConn, userId, addr.String(), c.serverId, types2.WithNodeLoginTime(time.Now().Unix()))
+
+	go c.handleRead(node)         // 读处理
+	go c.handleWrite(node)        // 写处理
+	go c.handleBroadcastMsg(node) // 处理广播消息
+
+	// 用户跟节点的映射
+	SetNode(node.UserId, node)
+}
+
+// 处理消息读取
+func (c *WsConn) handleRead(n *types2.Node) {
+	logger.Debugf("userId:%d 已连接", n.UserId)
+	defer CloseConn(n)
+
+	for {
+		//_ = n.Conn.SetReadDeadline(time.Now().Add(writeWait))
+		_, message, err := n.Conn.ReadMessage()
+		/*if err != nil && WsErrorNeedClose(err) {
+			return
+		}*/
+		if err != nil {
+			logger.Debug("node 节点读取消息失败", zap.Error(err))
+			return
+		}
+
+		//message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
+		logger.Debugf("接收到 userId:%d 数据：%s", n.UserId, string(message))
+
+		event.RoomEvent.PushReadMsg(n, message)
+	}
+}
+
+// 处理消息写请求（给当前连接发送消息）
+func (c *WsConn) handleWrite(n *types2.Node) {
+	ticker := time.NewTicker(pingPeriod)
+	defer func() {
+		ticker.Stop()
+		//n.Close()
+	}()
+
+	for {
+		select {
+		case qData, ok := <-n.DataQueue:
+			if !ok {
+				// 连接关闭
+				_ = n.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+				return
+			}
+
+			logger.Debugf("[conn %d] get data from queue:%s", n.UserId, qData.Data)
+
+			if err := n.Conn.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
+				logger.Error("set write deadline error", zap.Error(err))
+				return
+			}
+
+			data := types.Output{
+				RequestId:    qData.RequestId,
+				Code:         qData.Code,
+				Msg:          qData.Msg,
+				Method:       qData.Method,
+				Data:         qData.Data,
+				FromUid:      qData.FromUid,
+				FromUsername: qData.FromUsername,
+				RoomId:       n.RoomId,
+				FromServer:   qData.FromServer,
+			}
+
+			if data.Msg == "" {
+				data.Msg = data.Code.Name()
+			}
+
+			if err := n.Conn.WriteMessage(websocket.TextMessage, data.Marshal()); err != nil {
+				logger.Error("write msg error", zap.Error(err))
+				return
+			}
+		case <-ticker.C:
+			logger.Debugf("用户id：%d 心跳检查", n.UserId)
+			_ = n.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := n.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				n.HeartbeatErrNum++
+				logger.Error("ping", zap.Error(err))
+				// 心跳不通过，关闭连接
+				if n.IsHeartbeatDeal() {
+					logger.Info("heartbeat retry close", zap.String("用户id", util.Uint64ToString(n.UserId)))
+					CloseConn(n)
+					return
+				}
+			} else {
+				n.HeartbeatTime = time.Now().Unix() // 更新心跳时间
+			}
+		}
+	}
+}
+
+// 处理广播消息
+func (c *WsConn) handleBroadcastMsg(n *types2.Node) {
+	var ws *websocket.Conn
+	for {
+		select {
+		case wsData, ok := <-n.BroadcastQueue:
+			if !ok {
+				return
+			}
+
+			if ws = GetGatewayClient(); ws != nil {
+				msg := wsData.QueueMsgData().Marshal()
+				logger.Debug("发送广播消息：" + string(msg))
+				err := ws.WriteMessage(websocket.TextMessage, msg)
+				if err != nil {
+					logger.Debug("发送广播消息失败：" + err.Error())
+				}
+			}
+		}
+	}
 }
 
 // 处理网关连接
@@ -124,7 +237,7 @@ func (c *WsConn) handleGatewayConn(w http.ResponseWriter, r *http.Request) {
 
 	// 权限判断
 	if r.URL.Query().Get(config.GatewayAuthKey) != config.GatewayAuthVal {
-		writeTextMessage(wsConn, room.MethodServiceNotice, "无权操作")
+		WriteTextMessage(wsConn, types.MethodServiceNotice, "无权操作")
 		_ = wsConn.Close()
 		return
 	}
@@ -152,25 +265,7 @@ func (c *WsConn) handleGatewayConn(w http.ResponseWriter, r *http.Request) {
 
 		logger.Debugf("接收到网关数据：%s", string(message))
 
-		var data = new(room.QueueMsgData)
-		err = json.Unmarshal(message, data)
-		if err != nil {
-			logger.Infof("网关消息格式有误：%s", string(message))
-			writeTextMessage(wsConn, room.MethodServiceNotice, "消息格式有误")
-			continue
-		}
-
-		switch data.Method {
-		case room.MethodNormal: // 普通消息。发送指定用户
-			if node := GetNode(data.ToUid); node != nil {
-				node.DataQueue <- data
-			}
-		case room.MethodCreateRoomNotice: // 创建房间
-			PushAll(data)
-		default:
-			// 推送当前服务指定房间的全部用户
-			c.roomApp.SendRoomMsg(data.RoomId, data)
-		}
+		event.RoomEvent.PushGatewayMsg(wsConn, message)
 	}
 }
 

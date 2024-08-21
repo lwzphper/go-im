@@ -1,12 +1,12 @@
 package service
 
 import (
-	"go-im/internal/connect"
-	roomType "go-im/internal/logic/room"
+	roomType "go-im/internal/logic/room/types"
+	"go-im/internal/types"
 )
 
 // 一对一消息
-func (s *Service) Normal(n *connect.Node, data *roomType.Input) {
+func (s *Service) normal(n *types.Node, data *roomType.Input) {
 	if data.ToUid == 0 {
 		s.sendErrorMsg(n, data.RequestId, roomType.MethodNormal, roomType.CodeValidateError, "未选择发送的用户")
 		return
