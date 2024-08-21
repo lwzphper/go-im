@@ -20,7 +20,7 @@ docker build -t goim/gateway -f ./deployment/gateway/Dockerfile .
 docker build -t goim/service -f ./deployment/service/Dockerfile .
 
 # 启动容器
-docker-compose up -f docker/docker-comopse.yml -d
+docker-compose -f docker/docker-compose.yml up -d
 ```
 
 #### 方式二、手动安装
