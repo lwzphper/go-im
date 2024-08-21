@@ -39,7 +39,7 @@ func NewConfig() *Config {
 		},
 		Redis: Redis{
 			Name:        "default",
-			Addr:        "redis:16379",
+			Addr:        "redis:6379",
 			Password:    "",
 			Database:    0,
 			MinIdleConn: 3,

@@ -113,7 +113,7 @@ func (c *WsConn) handleConn(w http.ResponseWriter, r *http.Request) {
 	go c.handleBroadcastMsg(node) // 处理广播消息
 
 	// 用户跟节点的映射
-	SetNode(node.UserId, node)
+	SetNode(userId, node)
 }
 
 // 处理消息读取

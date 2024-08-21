@@ -17,11 +17,11 @@ services:
     image: redis:7.4.0-alpine
     container_name: redis
     ports:
-      - "16379:16379"
-    volumes:
-      - ./redis/redis.conf:/etc/redis.conf:ro
-      - ./redis/data:/data/:rw
-    entrypoint: [ "redis-server", "/etc/redis.conf"]
+      - "16379:6379"
+#    volumes:
+#      - ./redis/redis.conf:/etc/redis.conf:ro
+#      - ./redis/data:/data/:rw
+#    entrypoint: ["redis-server", "/etc/redis.conf"]
     restart: always
     networks:
       - go_im

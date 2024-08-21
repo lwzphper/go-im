@@ -10,6 +10,7 @@ import (
 func (s *Service) Dispatch(userId uint64, message []byte) {
 	n := types2.GetNode(userId)
 	if n == nil {
+		logger.Infof("获取用户节点失败：%d", userId)
 		return
 	}
 

@@ -36,6 +36,11 @@ func (s *Service) getRoom(roomId uint64) *Room {
 		return r
 	}
 
+	// 本地不存在，从Redis中获取
+	if name := s.roomCache.GetName(roomId); name != "" {
+		return s.newRoom(roomId, name)
+	}
+
 	return nil
 }
 
