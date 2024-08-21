@@ -33,7 +33,7 @@ func (r *RoomCache) List() map[string]string {
 	return r.rdClient.HGetAll(context.Background(), cacheKeyCreateRoomId).Val()
 }
 
-// 创建房间
+// 创建房间。返回值：是否创建成功，0 表示房间已存在或创建失败
 func (r *RoomCache) Create(roomId uint64, roomName string) (bool, error) {
 	script := `
 	local value = redis.call("HEXISTS", KEYS[1], ARGV[1])

@@ -24,7 +24,7 @@ func (s *Service) create(userId uint64, data *types.Input) {
 		s.sendErrorMsg(n, data.RequestId, types.MethodCreateRoom, types.CodeError, "创建房间失败，请稍后再试。")
 		return
 	}
-	if isCreate {
+	if !isCreate {
 		s.sendErrorMsg(n, data.RequestId, types.MethodCreateRoom, types.CodeValidateError, "您已创建房间，不能重复创建")
 		return
 	}
