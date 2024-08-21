@@ -6,7 +6,6 @@ import (
 	"go-im/config"
 	"go-im/internal/event"
 	"go-im/internal/logic/room/types"
-	types2 "go-im/internal/types"
 	"go-im/pkg/errorx"
 	"go-im/pkg/jwt"
 	"go-im/pkg/logger"
@@ -107,7 +106,7 @@ func (c *WsConn) handleConn(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	node := types2.NewNode(wsConn, userId, addr.String(), c.serverId, types2.WithNodeLoginTime(time.Now().Unix()))
+	node := NewNode(wsConn, userId, addr.String(), c.serverId, WithNodeLoginTime(time.Now().Unix()))
 
 	go c.handleRead(node)         // 读处理
 	go c.handleWrite(node)        // 写处理
@@ -118,7 +117,7 @@ func (c *WsConn) handleConn(w http.ResponseWriter, r *http.Request) {
 }
 
 // 处理消息读取
-func (c *WsConn) handleRead(n *types2.Node) {
+func (c *WsConn) handleRead(n *Node) {
 	logger.Debugf("userId:%d 已连接", n.UserId)
 	defer CloseConn(n)
 
@@ -141,7 +140,7 @@ func (c *WsConn) handleRead(n *types2.Node) {
 }
 
 // 处理消息写请求（给当前连接发送消息）
-func (c *WsConn) handleWrite(n *types2.Node) {
+func (c *WsConn) handleWrite(n *Node) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -157,30 +156,14 @@ func (c *WsConn) handleWrite(n *types2.Node) {
 				return
 			}
 
-			logger.Debugf("[conn %d] get data from queue:%s", n.UserId, qData.Data)
+			logger.Debugf("get data:%s", qData)
 
 			if err := n.Conn.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
 				logger.Error("set write deadline error", zap.Error(err))
 				return
 			}
 
-			data := types.Output{
-				RequestId:    qData.RequestId,
-				Code:         qData.Code,
-				Msg:          qData.Msg,
-				Method:       qData.Method,
-				Data:         qData.Data,
-				FromUid:      qData.FromUid,
-				FromUsername: qData.FromUsername,
-				RoomId:       n.RoomId,
-				FromServer:   qData.FromServer,
-			}
-
-			if data.Msg == "" {
-				data.Msg = data.Code.Name()
-			}
-
-			if err := n.Conn.WriteMessage(websocket.TextMessage, data.Marshal()); err != nil {
+			if err := n.Conn.WriteMessage(websocket.TextMessage, qData); err != nil {
 				logger.Error("write msg error", zap.Error(err))
 				return
 			}
@@ -204,7 +187,7 @@ func (c *WsConn) handleWrite(n *types2.Node) {
 }
 
 // 处理广播消息
-func (c *WsConn) handleBroadcastMsg(n *types2.Node) {
+func (c *WsConn) handleBroadcastMsg(n *Node) {
 	var ws *websocket.Conn
 	for {
 		select {
@@ -214,9 +197,8 @@ func (c *WsConn) handleBroadcastMsg(n *types2.Node) {
 			}
 
 			if ws = GetGatewayClient(); ws != nil {
-				msg := wsData.QueueMsgData().Marshal()
-				logger.Debug("发送广播消息：" + string(msg))
-				err := ws.WriteMessage(websocket.TextMessage, msg)
+				logger.Debug("发送广播消息：" + string(wsData))
+				err := ws.WriteMessage(websocket.TextMessage, wsData)
 				if err != nil {
 					logger.Debug("发送广播消息失败：" + err.Error())
 				}

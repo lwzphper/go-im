@@ -1,8 +1,7 @@
-package types
+package connect
 
 import (
 	"github.com/gorilla/websocket"
-	"go-im/internal/logic/room/types"
 	"sync"
 	"time"
 )
@@ -26,18 +25,18 @@ func WithNodeLoginTime(t int64) NodeOpt {
 }
 
 type Node struct {
-	Mutex           sync.Mutex               // WS互斥锁
-	Conn            *websocket.Conn          // websocket连接
-	UserId          uint64                   // 用户ID
-	RoomId          uint64                   // 订阅的房间ID
-	HeartbeatTime   int64                    // 心跳时间
-	HeartbeatErrNum uint8                    // 心跳错误次数
-	LoginTime       int64                    // 登录时间
-	DataQueue       chan *types.QueueMsgData // 消息队列
-	BroadcastQueue  chan *types.Output       // 广播消息
-	ServerAddr      string                   // 服务器地址
-	ServerId        string                   // 服务器ID
-	IsClose         bool                     // 是否已关闭
+	Mutex           sync.Mutex      // WS互斥锁
+	Conn            *websocket.Conn // websocket连接
+	UserId          uint64          // 用户ID
+	RoomId          uint64          // 订阅的房间ID
+	HeartbeatTime   int64           // 心跳时间
+	HeartbeatErrNum uint8           // 心跳错误次数
+	LoginTime       int64           // 登录时间
+	DataQueue       chan []byte     // 消息队列
+	BroadcastQueue  chan []byte     // 广播消息
+	ServerAddr      string          // 服务器地址
+	ServerId        string          // 服务器ID
+	IsClose         bool            // 是否已关闭
 }
 
 func NewNode(conn *websocket.Conn, userId uint64, serverAddr, ServerId string, opts ...NodeOpt) *Node {
@@ -47,8 +46,8 @@ func NewNode(conn *websocket.Conn, userId uint64, serverAddr, ServerId string, o
 		UserId:         userId,
 		HeartbeatTime:  nowTime,
 		LoginTime:      nowTime,
-		DataQueue:      make(chan *types.QueueMsgData, MsgDefaultChannelSize),
-		BroadcastQueue: make(chan *types.Output, MsgDefaultChannelSize),
+		DataQueue:      make(chan []byte, MsgDefaultChannelSize),
+		BroadcastQueue: make(chan []byte, MsgDefaultChannelSize),
 		ServerAddr:     serverAddr,
 		ServerId:       ServerId,
 	}

@@ -1,8 +1,8 @@
 package service
 
 import (
+	"go-im/internal/connect"
 	roomType "go-im/internal/logic/room/types"
-	"go-im/internal/types"
 	"go-im/pkg/logger"
 	"go-im/pkg/util"
 )
@@ -23,7 +23,7 @@ func (s *Service) newRoom(roomId uint64, name string) *Room {
 	r := &Room{
 		RoomId:  roomId,
 		name:    name,
-		clients: make(map[uint64]*types.Node),
+		clients: make(map[uint64]*connect.Node),
 	}
 	s.roomsManager[roomId] = r
 	return r
@@ -40,7 +40,7 @@ func (s *Service) getRoom(roomId uint64) *Room {
 }
 
 // 加入房间
-func (s *Service) joinRoom(r *Room, n *types.Node, username string) {
+func (s *Service) joinRoom(r *Room, n *connect.Node, username string) {
 	r.joinLock.Lock()
 	defer r.joinLock.Unlock()
 
@@ -67,12 +67,12 @@ func (s *Service) pushRoom(r *Room, data *roomType.QueueMsgData) {
 		if data.FromUid == uid {
 			continue
 		}
-		node.DataQueue <- data
+		node.DataQueue <- data.MarshalOutput(node.RoomId)
 	}
 }
 
 // 离开房间
-func (s *Service) handleLeaveRoom(r *Room, conn *types.Node) {
+func (s *Service) handleLeaveRoom(r *Room, conn *connect.Node) {
 	r.leaveLock.Lock()
 	defer r.leaveLock.Unlock()
 

@@ -74,6 +74,26 @@ func (q *QueueMsgData) Marshal() []byte {
 	return result
 }
 
+// 转换输出结果
+func (q *QueueMsgData) MarshalOutput(roomId uint64) []byte {
+	data := Output{
+		RequestId:    q.RequestId,
+		Code:         q.Code,
+		Msg:          q.Msg,
+		Method:       q.Method,
+		Data:         q.Data,
+		FromUid:      q.FromUid,
+		FromUsername: q.FromUsername,
+		RoomId:       roomId,
+		FromServer:   q.FromServer,
+	}
+
+	if data.Msg == "" {
+		data.Msg = data.Code.Name()
+	}
+	return data.Marshal()
+}
+
 // 下行数据
 type Output struct {
 	RequestId    string    `json:"request_id"`              // 消息id

@@ -21,7 +21,7 @@ func (s *Service) GatewayMsg(wsConn *websocket.Conn, message []byte) {
 	switch data.Method {
 	case types2.MethodNormal: // 普通消息。发送指定用户
 		if node := connect.GetNode(data.ToUid); node != nil {
-			node.DataQueue <- data
+			node.DataQueue <- data.MarshalOutput(node.RoomId)
 		}
 	case types2.MethodCreateRoomNotice: // 创建房间
 		connect.PushAll(data)

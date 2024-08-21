@@ -4,11 +4,10 @@ import (
 	"github.com/gorilla/websocket"
 	"go-im/internal/connect"
 	roomType "go-im/internal/logic/room/types"
-	"go-im/internal/types"
 )
 
 // 离开房间
-func (s *Service) leaveRoom(n *types.Node, data *roomType.Input) {
+func (s *Service) leaveRoom(n *connect.Node, data *roomType.Input) {
 	// 下线广播
 	s.offlineNotify(n)
 
@@ -19,7 +18,7 @@ func (s *Service) leaveRoom(n *types.Node, data *roomType.Input) {
 }
 
 // 下线广播（不能通过 chan 通知，因为关闭客户端时已将相关 chan 关闭）
-func (s *Service) offlineNotify(n *types.Node) {
+func (s *Service) offlineNotify(n *connect.Node) {
 	name := s.userService.UserIdName(n.UserId)
 	data := roomType.Output{
 		Method: roomType.MethodOffline,

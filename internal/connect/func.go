@@ -5,7 +5,6 @@ import (
 	"github.com/pkg/errors"
 	"go-im/internal/event"
 	"go-im/internal/logic/room/types"
-	types2 "go-im/internal/types"
 	"go-im/pkg/logger"
 	"go-im/pkg/util"
 	"go.uber.org/zap"
@@ -60,7 +59,7 @@ func OutputError(conn *websocket.Conn, code types.Code, msg string) bool {
 }
 
 // 读取conn错误。返回结果：是否需要终止监听
-func handleReadErr(n *types2.Node, err error) bool {
+func handleReadErr(n *Node, err error) bool {
 	var closeError *websocket.CloseError
 	if errors.As(err, &closeError) {
 		logger.Debug("连接关闭", zap.String("用户id", util.Uint64ToString(n.UserId)))
@@ -92,7 +91,7 @@ func handleReadErr(n *types2.Node, err error) bool {
 }
 
 // 关闭连接
-func CloseConn(n *types2.Node) {
+func CloseConn(n *Node) {
 	n.Mutex.Lock()
 	defer n.Mutex.Unlock()
 

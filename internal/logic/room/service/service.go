@@ -6,7 +6,6 @@ import (
 	"go-im/internal/logic/room/repo"
 	"go-im/internal/logic/room/types"
 	"go-im/internal/logic/user/service"
-	types2 "go-im/internal/types"
 	"sync"
 )
 
@@ -36,13 +35,13 @@ func NewService() *Service {
 
 type IService interface {
 	// 分发消息
-	Dispatch(n *types2.Node, message []byte)
+	Dispatch(n *connect.Node, message []byte)
 	// 网关消息
 	GatewayMsg(wsConn *websocket.Conn, message []byte)
 	// 发送当前房间链接的消息
 	SendRoomMsg(roomId uint64, data *types.QueueMsgData)
 	// 关闭操作
-	Close(n *types2.Node)
+	Close(n *connect.Node)
 }
 
 type Service struct {
@@ -58,14 +57,14 @@ type Service struct {
 type Room struct {
 	RoomId    uint64 // 房间ID
 	name      string // 房间名称
-	clients   map[uint64]*types2.Node
+	clients   map[uint64]*connect.Node
 	joinLock  sync.RWMutex
 	leaveLock sync.RWMutex
 	pushLock  sync.RWMutex
 }
 
 // 判断用户是否在加入房间
-func (s *Service) isInRoom(n *types2.Node, roomId uint64) bool {
+func (s *Service) isInRoom(n *connect.Node, roomId uint64) bool {
 	if roomId == 0 {
 		return false
 	}
@@ -86,27 +85,37 @@ func (s *Service) isInRoom(n *types2.Node, roomId uint64) bool {
 }
 
 // 发送成功消息
-func (s *Service) sendSuccessMsg(n *types2.Node, RequestId string, method types.MsgMethod, data any) {
-	n.DataQueue <- &types.QueueMsgData{
+func (s *Service) sendSuccessMsg(n *connect.Node, RequestId string, method types.MsgMethod, data any) {
+	result := types.Output{
 		RequestId: RequestId,
+		Code:      types.CodeSuccess,
+		Msg:       types.CodeSuccess.Name(),
 		Method:    method,
 		Data:      data,
-		Code:      types.CodeSuccess,
+		RoomId:    n.RoomId,
 	}
+
+	n.DataQueue <- result.Marshal()
 }
 
 // 发送错误信息
-func (s *Service) sendErrorMsg(n *types2.Node, RequestId string, method types.MsgMethod, code types.Code, Msg string) {
-	n.DataQueue <- &types.QueueMsgData{
-		RequestId: RequestId,
-		Method:    method,
-		Code:      code,
-		Msg:       Msg,
+func (s *Service) sendErrorMsg(n *connect.Node, RequestId string, method types.MsgMethod, code types.Code, msg string) {
+	if msg == "" {
+		msg = code.Name()
 	}
+	result := types.Output{
+		RequestId: RequestId,
+		Code:      code,
+		Msg:       msg,
+		Method:    method,
+		RoomId:    n.RoomId,
+	}
+
+	n.DataQueue <- result.Marshal()
 }
 
 // 获取输出结果
-func (s *Service) getOutput(n *types2.Node, data *types.Input) *types.Output {
+func (s *Service) getOutput(n *connect.Node, data *types.Input) *types.Output {
 	return &types.Output{
 		RequestId:    data.RequestId,
 		Code:         types.CodeSuccess,
@@ -121,14 +130,14 @@ func (s *Service) getOutput(n *types2.Node, data *types.Input) *types.Output {
 }
 
 // 发送房间消息（全部服务器）
-func (s *Service) allServiceRoomMsg(n *types2.Node, data *types.Input) bool {
+func (s *Service) allServiceRoomMsg(n *connect.Node, data *types.Input) bool {
 	if !s.isInRoom(n, data.RoomId) {
 		s.sendErrorMsg(n, data.RequestId, types.MethodGroup, types.CodeValidateError, "未加入群聊")
 		return false
 	}
 
 	// 广播消息
-	n.BroadcastQueue <- s.getOutput(n, data)
+	n.BroadcastQueue <- s.getOutput(n, data).QueueMsgData().Marshal()
 
 	// 推送当前服务指定房间的全部用户
 	s.sendServerRoom(n, data)
@@ -137,12 +146,12 @@ func (s *Service) allServiceRoomMsg(n *types2.Node, data *types.Input) bool {
 }
 
 // ack 确认
-func (s *Service) ack(n *types2.Node, data *types.Input) {
+func (s *Service) ack(n *connect.Node, data *types.Input) {
 	s.sendSuccessMsg(n, data.RequestId, types.MethodServiceAck, nil)
 }
 
 // 发送房间消息（当前服务器）
-func (s *Service) sendServerRoom(n *types2.Node, data *types.Input) {
+func (s *Service) sendServerRoom(n *connect.Node, data *types.Input) {
 	out := s.getOutput(n, data)
 
 	if r := s.getRoom(n.RoomId); r != nil {
@@ -151,11 +160,11 @@ func (s *Service) sendServerRoom(n *types2.Node, data *types.Input) {
 }
 
 // 广播消息（全部在线用户，区分房间）
-func (s *Service) broadcastMsg(n *types2.Node, data *types.Input) {
+func (s *Service) broadcastMsg(n *connect.Node, data *types.Input) {
 	// 广播消息
 	out := s.getOutput(n, data)
 
-	n.BroadcastQueue <- out
+	n.BroadcastQueue <- out.QueueMsgData().Marshal()
 
 	// 推送当前服务指定房间的全部用户
 	connect.PushAll(out.QueueMsgData())

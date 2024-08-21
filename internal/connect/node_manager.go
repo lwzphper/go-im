@@ -2,7 +2,6 @@ package connect
 
 import (
 	"go-im/internal/logic/room/types"
-	types2 "go-im/internal/types"
 	"sync"
 )
 
@@ -10,15 +9,15 @@ import (
 var NodesManger = sync.Map{} // UserId => *Node
 
 // GetNode 获取用户连接
-func GetNode(userId uint64) *types2.Node {
+func GetNode(userId uint64) *Node {
 	if value, ok := NodesManger.Load(userId); ok {
-		return value.(*types2.Node)
+		return value.(*Node)
 	}
 	return nil
 }
 
 // SetNode 设置用户连接
-func SetNode(userId uint64, conn *types2.Node) {
+func SetNode(userId uint64, conn *Node) {
 	NodesManger.Store(userId, conn)
 }
 
@@ -30,8 +29,8 @@ func DeleteNode(userId uint64) {
 // 广播消息
 func PushAll(data *types.QueueMsgData) {
 	NodesManger.Range(func(key, value any) bool {
-		node := value.(*types2.Node)
-		node.DataQueue <- data
+		node := value.(*Node)
+		node.DataQueue <- data.MarshalOutput(node.RoomId)
 		return true
 	})
 }

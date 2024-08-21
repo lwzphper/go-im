@@ -3,8 +3,8 @@ package event
 import (
 	"github.com/asaskevich/EventBus"
 	"github.com/gorilla/websocket"
+	types2 "go-im/internal/connect"
 	"go-im/internal/logic/room/service"
-	types2 "go-im/internal/types"
 )
 
 const (

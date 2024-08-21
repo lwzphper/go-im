@@ -1,8 +1,8 @@
 package service
 
 import (
+	types2 "go-im/internal/connect"
 	"go-im/internal/logic/room/types"
-	types2 "go-im/internal/types"
 	"go-im/pkg/logger"
 	"go-im/pkg/util"
 	"go.uber.org/zap"
