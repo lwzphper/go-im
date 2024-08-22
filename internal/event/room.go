@@ -31,10 +31,15 @@ func (r *roomEvent) Subscribe(event string, fn any) {
 	}
 }
 
-// 接收到客户端消息事件
-func (r *roomEvent) PushReadMsg(userId uint64, msg []byte) {
-	r.bus.Publish(ReadMsg, userId, msg)
+// 发布事件
+func (r *roomEvent) Publish(event string, args ...any) {
+	r.bus.Publish(event, args...)
 }
+
+// 接收到客户端消息事件
+/*func (r *roomEvent) PushReadMsg(userId uint64, msg []byte) {
+	r.bus.Publish(ReadMsg, userId, msg)
+}*/
 
 // 强制下线广播事件
 func (r *roomEvent) PushForceOfflineBroadcast(serviceId string, userId uint64) {

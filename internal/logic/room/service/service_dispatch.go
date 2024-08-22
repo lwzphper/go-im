@@ -1,18 +1,18 @@
 package service
 
 import (
-	types2 "go-im/internal/connect"
+	"go-im/internal/connect"
 	"go-im/internal/logic/room/types"
 	"go-im/pkg/logger"
 )
 
 // 分发消息
-func (s *Service) Dispatch(userId uint64, message []byte) {
-	n := types2.GetNode(userId)
+func (s *Service) Dispatch(n *connect.Node, message []byte) {
+	/*n := types2.GetNode(userId)
 	if n == nil {
 		logger.Infof("获取用户节点失败：%d", userId)
 		return
-	}
+	}*/
 
 	data, err := types.UnMarshalInput(message)
 	if err != nil {

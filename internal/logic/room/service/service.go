@@ -35,7 +35,7 @@ func NewService() *Service {
 
 type IService interface {
 	// 分发消息
-	Dispatch(userId uint64, message []byte)
+	Dispatch(n *connect.Node, message []byte)
 	// 网关消息
 	GatewayMsg(wsConn *websocket.Conn, message []byte)
 	// 发送当前房间链接的消息

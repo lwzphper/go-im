@@ -86,7 +86,7 @@ func (n *Node) handleRead() {
 		//message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 		logger.Debugf("接收到 userId:%d 数据：%s", n.UserId, string(message))
 
-		event.RoomEvent.PushReadMsg(n.UserId, message)
+		event.RoomEvent.Publish(event.ReadMsg, n, message)
 	}
 }
 
