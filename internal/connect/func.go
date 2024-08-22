@@ -3,8 +3,8 @@ package connect
 import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
+	"go-im/internal/event"
 	"go-im/internal/logic/room/types"
-	"go-im/internal/pkg/event"
 	"go-im/pkg/logger"
 	"go-im/pkg/util"
 	"go.uber.org/zap"

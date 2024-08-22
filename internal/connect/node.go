@@ -2,6 +2,10 @@ package connect
 
 import (
 	"github.com/gorilla/websocket"
+	"go-im/internal/event"
+	"go-im/pkg/logger"
+	"go-im/pkg/util"
+	"go.uber.org/zap"
 	"sync"
 	"time"
 )
@@ -56,7 +60,102 @@ func NewNode(conn *websocket.Conn, userId uint64, serverAddr, ServerId string, o
 		opt(node)
 	}
 
+	go node.handleRead()         // 读处理
+	go node.handleWrite()        // 写处理
+	go node.handleBroadcastMsg() // 处理广播消息
+
 	return node
+}
+
+// 处理消息读取
+func (n *Node) handleRead() {
+	logger.Debugf("userId:%d 已连接", n.UserId)
+	defer CloseConn(n)
+
+	for {
+		//_ = n.Conn.SetReadDeadline(time.Now().Add(writeWait))
+		_, message, err := n.Conn.ReadMessage()
+		/*if err != nil && WsErrorNeedClose(err) {
+			return
+		}*/
+		if err != nil {
+			logger.Debug("node 节点读取消息失败", zap.Error(err))
+			return
+		}
+
+		//message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
+		logger.Debugf("接收到 userId:%d 数据：%s", n.UserId, string(message))
+
+		event.RoomEvent.PushReadMsg(n.UserId, message)
+	}
+}
+
+// 处理消息写请求（给当前连接发送消息）
+func (n *Node) handleWrite() {
+	ticker := time.NewTicker(pingPeriod)
+	defer func() {
+		ticker.Stop()
+		//n.Close()
+	}()
+
+	for {
+		select {
+		case qData, ok := <-n.DataQueue:
+			if !ok {
+				// 连接关闭
+				_ = n.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+				return
+			}
+
+			logger.Debugf("get data:%s", qData)
+
+			if err := n.Conn.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
+				logger.Error("set write deadline error", zap.Error(err))
+				return
+			}
+
+			if err := n.Conn.WriteMessage(websocket.TextMessage, qData); err != nil {
+				logger.Error("write msg error", zap.Error(err))
+				return
+			}
+		case <-ticker.C:
+			logger.Debugf("用户id：%d 心跳检查", n.UserId)
+			_ = n.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := n.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				n.HeartbeatErrNum++
+				logger.Error("ping", zap.Error(err))
+				// 心跳不通过，关闭连接
+				if n.IsHeartbeatDeal() {
+					logger.Info("heartbeat retry close", zap.String("用户id", util.Uint64ToString(n.UserId)))
+					CloseConn(n)
+					return
+				}
+			} else {
+				n.HeartbeatTime = time.Now().Unix() // 更新心跳时间
+			}
+		}
+	}
+}
+
+// 处理广播消息
+func (n *Node) handleBroadcastMsg() {
+	var ws *websocket.Conn
+	for {
+		select {
+		case wsData, ok := <-n.BroadcastQueue:
+			if !ok {
+				return
+			}
+
+			if ws = GetGatewayClient(); ws != nil {
+				logger.Debug("发送广播消息：" + string(wsData))
+				err := ws.WriteMessage(websocket.TextMessage, wsData)
+				if err != nil {
+					logger.Debug("发送广播消息失败：" + err.Error())
+				}
+			}
+		}
+	}
 }
 
 // 检查是否连接是否存活

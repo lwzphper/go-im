@@ -12,7 +12,7 @@ func (s *Service) join(n *connect.Node, data *roomType.Input) {
 		return
 	}
 
-	room := s.getRoom(data.RoomId)
+	room := s.syncGetRoom(data.RoomId)
 	if room == nil {
 		s.sendErrorMsg(n, data.RequestId, roomType.MethodJoinRoom, roomType.CodeValidateError, "房间不存在")
 		return

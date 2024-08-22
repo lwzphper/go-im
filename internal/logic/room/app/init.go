@@ -1,22 +1,15 @@
 package app
 
 import (
-	"github.com/gorilla/websocket"
+	"go-im/internal/event"
 	"go-im/internal/logic/room/service"
-	"go-im/internal/pkg/event"
 )
 
 func Init() {
 	srv := service.NewService()
 
 	// 注册事件
-	event.RoomEvent.Subscribe(event.EventReadMsg, func(userId uint64, msg []byte) {
-		srv.Dispatch(userId, msg)
-	})
-	event.RoomEvent.Subscribe(event.EventGatewayMsg, func(wsConn *websocket.Conn, msg []byte) {
-		srv.GatewayMsg(wsConn, msg)
-	})
-	event.RoomEvent.Subscribe(event.EventCloseConn, func(userId uint64) {
-		srv.Close(userId)
-	})
+	event.RoomEvent.Subscribe(event.ReadMsg, srv.Dispatch)
+	event.RoomEvent.Subscribe(event.GatewayMsg, srv.GatewayMsg)
+	event.RoomEvent.Subscribe(event.CloseConn, srv.Close)
 }

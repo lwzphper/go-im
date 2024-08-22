@@ -36,6 +36,15 @@ func (s *Service) getRoom(roomId uint64) *Room {
 		return r
 	}
 
+	return nil
+}
+
+// 同步获取房间（本地 map 不存在，检查缓存中是否存在）
+func (s *Service) syncGetRoom(roomId uint64) *Room {
+	if r := s.getRoom(roomId); r != nil {
+		return r
+	}
+
 	// 本地不存在，从Redis中获取
 	if name := s.roomCache.GetName(roomId); name != "" {
 		return s.newRoom(roomId, name)
