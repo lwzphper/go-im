@@ -36,11 +36,6 @@ func (r *roomEvent) Publish(event string, args ...any) {
 	r.bus.Publish(event, args...)
 }
 
-// 接收到客户端消息事件
-/*func (r *roomEvent) PushReadMsg(userId uint64, msg []byte) {
-	r.bus.Publish(ReadMsg, userId, msg)
-}*/
-
 // 强制下线广播事件
 func (r *roomEvent) PushForceOfflineBroadcast(serviceId string, userId uint64) {
 	r.bus.Publish(ForceOfflineBroadcast, serviceId, userId)
@@ -49,9 +44,4 @@ func (r *roomEvent) PushForceOfflineBroadcast(serviceId string, userId uint64) {
 // 网关广播事件
 func (r *roomEvent) PushGatewayMsg(wsConn *websocket.Conn, msg []byte) {
 	r.bus.Publish(GatewayMsg, wsConn, msg)
-}
-
-// 客户端连接关闭事件
-func (r *roomEvent) PushCloseConn(userId uint64) {
-	r.bus.Publish(CloseConn, userId)
 }

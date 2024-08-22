@@ -110,7 +110,7 @@ func CloseConn(n *Node) {
 	// 删除用户连接映射
 	DeleteNode(n.UserId)
 
-	event.RoomEvent.PushCloseConn(n.UserId)
+	event.RoomEvent.Publish(event.CloseConn, n)
 
 	logger.Debugf("用户：%d 程序已关闭连接", n.UserId)
 }

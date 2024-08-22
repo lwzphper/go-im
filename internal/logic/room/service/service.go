@@ -41,7 +41,7 @@ type IService interface {
 	// 发送当前房间链接的消息
 	SendRoomMsg(roomId uint64, data *types.QueueMsgData)
 	// 关闭操作
-	Close(userId uint64)
+	Close(n *connect.Node)
 	// 强制下线
 	ForceOfflineBroadcast(serverId string, userId uint64)
 }
