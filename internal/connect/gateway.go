@@ -35,6 +35,17 @@ func GetGatewayClient() *websocket.Conn {
 	return gatewayClient
 }
 
+// 发送广播消息
+func SendGatewayMsg(data []byte) {
+	if ws := GetGatewayClient(); ws != nil {
+		logger.Debug("发送广播消息：" + string(data))
+		err := ws.WriteMessage(websocket.TextMessage, data)
+		if err != nil {
+			logger.Debug("发送广播消息失败：" + err.Error())
+		}
+	}
+}
+
 // 尝试连接
 func gatewayDail() *websocket.Conn {
 	var err error

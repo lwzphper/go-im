@@ -1,17 +1,12 @@
 package service
 
 import (
-	"github.com/gorilla/websocket"
 	"go-im/internal/connect"
 	roomType "go-im/internal/logic/room/types"
 )
 
 // 离开房间
 func (s *Service) leaveRoom(n *connect.Node, data *roomType.Input) {
-	/*n := connect.GetNode(userId)
-	if n == nil {
-		return
-	}*/
 	// 下线广播
 	s.offlineNotify(n)
 
@@ -35,9 +30,7 @@ func (s *Service) offlineNotify(n *connect.Node) {
 	}
 
 	// 广播通知其他服务
-	if ws := connect.GetGatewayClient(); ws != nil {
-		_ = ws.WriteMessage(websocket.TextMessage, data.Marshal())
-	}
+	connect.SendGatewayMsg(data.Marshal())
 
 	// 推送当前服务指定房间的全部用户
 	if room := s.getRoom(n.RoomId); room != nil {

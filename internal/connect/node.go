@@ -139,21 +139,13 @@ func (n *Node) handleWrite() {
 
 // 处理广播消息
 func (n *Node) handleBroadcastMsg() {
-	var ws *websocket.Conn
 	for {
 		select {
 		case wsData, ok := <-n.BroadcastQueue:
 			if !ok {
 				return
 			}
-
-			if ws = GetGatewayClient(); ws != nil {
-				logger.Debug("发送广播消息：" + string(wsData))
-				err := ws.WriteMessage(websocket.TextMessage, wsData)
-				if err != nil {
-					logger.Debug("发送广播消息失败：" + err.Error())
-				}
-			}
+			SendGatewayMsg(wsData)
 		}
 	}
 }

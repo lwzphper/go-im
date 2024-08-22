@@ -37,15 +37,16 @@ func (m MsgMethod) Uint8() uint8 {
 
 // input method
 const (
-	MethodCreateRoom       MsgMethod = iota + 1 // 创建房间
-	MethodJoinRoom                              // 加入房间
-	MethodRoomList                              // 房间列表
-	MethodRoomUser                              // 获取房间用户列表
-	MethodGroup                                 // 群聊消息
-	MethodNormal                                // 普通消息
-	MethodOnline                                // 上线消息/加入房间
-	MethodOffline                               // 下线消息
-	MethodCreateRoomNotice                      // 新增房间通知
+	MethodCreateRoom            MsgMethod = iota + 1 // 创建房间
+	MethodJoinRoom                                   // 加入房间
+	MethodRoomList                                   // 房间列表
+	MethodRoomUser                                   // 获取房间用户列表
+	MethodGroup                                      // 群聊消息
+	MethodNormal                                     // 普通消息
+	MethodOnline                                     // 上线消息/加入房间
+	MethodOffline                                    // 下线消息
+	MethodCreateRoomNotice                           // 新增房间通知
+	MethodForceOfflineBroadcast                      // 通知用户强制下线
 )
 
 // Service method
