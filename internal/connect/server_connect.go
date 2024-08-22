@@ -124,8 +124,8 @@ func (c *WsConn) notifyForceOffline(serviceId string, userId uint64) {
 		return
 	}
 
-	// 其他节点登录
-	event.RoomEvent.PushForceOfflineBroadcast(serviceId, userId)
+	// 其他节点登录（这里有bug，后面排查，会进行死循环）
+	//event.RoomEvent.Publish(event.ForceOfflineBroadcast, serviceId, userId)
 }
 
 // 处理网关连接
@@ -168,7 +168,7 @@ func (c *WsConn) handleGatewayConn(w http.ResponseWriter, r *http.Request) {
 
 		logger.Debugf("接收到网关数据：%s", string(message))
 
-		event.RoomEvent.PushGatewayMsg(wsConn, message)
+		event.RoomEvent.Publish(event.GatewayMsg, wsConn, message)
 	}
 }
 

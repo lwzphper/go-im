@@ -2,7 +2,6 @@ package event
 
 import (
 	"github.com/asaskevich/EventBus"
-	"github.com/gorilla/websocket"
 	"go-im/pkg/logger"
 	"go.uber.org/zap"
 )
@@ -34,14 +33,4 @@ func (r *roomEvent) Subscribe(event string, fn any) {
 // 发布事件
 func (r *roomEvent) Publish(event string, args ...any) {
 	r.bus.Publish(event, args...)
-}
-
-// 强制下线广播事件
-func (r *roomEvent) PushForceOfflineBroadcast(serviceId string, userId uint64) {
-	r.bus.Publish(ForceOfflineBroadcast, serviceId, userId)
-}
-
-// 网关广播事件
-func (r *roomEvent) PushGatewayMsg(wsConn *websocket.Conn, msg []byte) {
-	r.bus.Publish(GatewayMsg, wsConn, msg)
 }
