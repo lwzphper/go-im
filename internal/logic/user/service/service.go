@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
+	"go-im/internal/connect"
+	"go-im/internal/logic/room/types"
 	user2 "go-im/internal/logic/user"
 	"go-im/internal/logic/user/model"
 	"go-im/internal/logic/user/repo"
@@ -77,12 +79,8 @@ func (u *Service) Login(ctx context.Context, req *user2.LoginReq) (*user2.LoginR
 		return nil, user2.ErrPassword
 	}
 
-	return &user2.LoginResult{
-		Id:            userInfo.Id,
-		Username:      userInfo.Username,
-		Nickname:      userInfo.Nickname,
-		ServerAddress: consul.C().RoundHealthServerUrl(),
-	}, nil
+	// 通知已登录用户下线
+	return u.handleLoginAfter(userInfo), nil
 }
 
 // LoginRegister 登录注册
@@ -115,12 +113,32 @@ func (u *Service) LoginRegister(ctx context.Context, req *user2.LoginReq) (*user
 		return nil, user2.ErrPassword
 	}
 
+	return u.handleLoginAfter(userInfo), nil
+}
+
+// 登录后事件
+func (u *Service) handleLoginAfter(userInfo *model.User) *user2.LoginResult {
+	srv := consul.C().RoundHealthServer()
+	if srv != nil {
+		u.forceOfflineNotify(srv.ID, userInfo.Id)
+	}
+
 	return &user2.LoginResult{
 		Id:            userInfo.Id,
 		Username:      userInfo.Username,
 		Nickname:      userInfo.Nickname,
-		ServerAddress: consul.C().RoundHealthServerUrl(),
-	}, nil
+		ServerAddress: consul.C().FormatServerUrl(srv),
+	}
+}
+
+// 通知强制下线
+func (u *Service) forceOfflineNotify(serverId string, userId uint64) {
+	data := types.QueueMsgData{
+		Method:     types.MethodForceOfflineBroadcast,
+		FromUid:    userId,
+		FromServer: serverId,
+	}
+	connect.SendGatewayMsg(data.Marshal())
 }
 
 // GetImServer 获取 IM 服务器

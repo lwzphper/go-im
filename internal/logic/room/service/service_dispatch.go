@@ -8,12 +8,6 @@ import (
 
 // 分发消息
 func (s *Service) Dispatch(n *connect.Node, message []byte) {
-	/*n := types2.GetNode(userId)
-	if n == nil {
-		logger.Infof("获取用户节点失败：%d", userId)
-		return
-	}*/
-
 	data, err := types.UnMarshalInput(message)
 	if err != nil {
 		logger.Infof("用户：%d 消息格式有误：%s", n.UserId, string(message))

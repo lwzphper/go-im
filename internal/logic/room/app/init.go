@@ -12,5 +12,4 @@ func Init() {
 	event.RoomEvent.Subscribe(event.ReadMsg, srv.Dispatch)
 	event.RoomEvent.Subscribe(event.GatewayMsg, srv.GatewayMsg)
 	event.RoomEvent.Subscribe(event.CloseConn, srv.Close)
-	event.RoomEvent.Subscribe(event.ForceOfflineBroadcast, srv.ForceOfflineBroadcast)
 }

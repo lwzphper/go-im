@@ -62,8 +62,3 @@ func (r *UserServiceCache) DeleteRoom(roomId uint64) int64 {
 func (r *UserServiceCache) cKey(roomId uint64) string {
 	return cacheKeyUserService + util.Uint64ToString(roomId)
 }
-
-// 获取 redis 客户端
-/*func (r *userServiceCache) c() *redis.Client {
-	return pkgRedis.C(pkgRedis.NAME_DEFAULT)
-}*/

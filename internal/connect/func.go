@@ -98,12 +98,12 @@ func CloseConn(n *Node) {
 	if n.IsClose {
 		return
 	}
-
 	n.IsClose = true
 
 	if err := n.Conn.Close(); err != nil {
 		logger.Error("close node connect error", zap.Error(err))
 	}
+	logger.Debugf("关闭用户连接成功：%d", n.UserId)
 	close(n.DataQueue)
 	close(n.BroadcastQueue)
 

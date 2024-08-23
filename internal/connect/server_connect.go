@@ -103,7 +103,10 @@ func (c *WsConn) handleConn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 判断是否在当前节点已登录，剔除下线
-	c.notifyForceOffline(c.serverId, userId)
+	if mapNode := GetNode(userId); mapNode != nil {
+		OutputError(mapNode.Conn, types.CodeAuthError, "当前账号已被其他用户登录")
+		CloseConn(mapNode)
+	}
 
 	addr, err := util.SplitAddress(c.address, config.C.App.InDocker)
 	if err != nil {
@@ -113,19 +116,6 @@ func (c *WsConn) handleConn(w http.ResponseWriter, r *http.Request) {
 
 	// 用户跟节点的映射
 	SetNode(userId, node)
-}
-
-// 如果用户已登录，通知强制下线
-func (c *WsConn) notifyForceOffline(serviceId string, userId uint64) {
-	// 用户在当前节点登录
-	if mapNode := GetNode(userId); mapNode != nil {
-		OutputError(mapNode.Conn, types.CodeAuthError, "当前账号已被其他用户登录")
-		CloseConn(mapNode)
-		return
-	}
-
-	// 其他节点登录（这里有bug，后面排查，会进行死循环）
-	//event.RoomEvent.Publish(event.ForceOfflineBroadcast, serviceId, userId)
 }
 
 // 处理网关连接

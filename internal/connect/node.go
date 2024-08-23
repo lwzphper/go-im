@@ -75,9 +75,6 @@ func (n *Node) handleRead() {
 	for {
 		//_ = n.Conn.SetReadDeadline(time.Now().Add(writeWait))
 		_, message, err := n.Conn.ReadMessage()
-		/*if err != nil && WsErrorNeedClose(err) {
-			return
-		}*/
 		if err != nil {
 			logger.Debug("node 节点读取消息失败", zap.Error(err))
 			return

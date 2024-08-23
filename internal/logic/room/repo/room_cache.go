@@ -58,8 +58,3 @@ func (r *RoomCache) Create(roomId uint64, roomName string) (bool, error) {
 func (r *RoomCache) Remove(roomId uint64) int64 {
 	return r.rdClient.HDel(context.Background(), cacheKeyCreateRoomId, util.Uint64ToString(roomId)).Val()
 }
-
-// 获取 redis 客户端
-/*func (r *roomCache) c() *redis.Client {
-	return pkgRedis.C(pkgRedis.NAME_DEFAULT)
-}*/

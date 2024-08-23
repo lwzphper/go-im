@@ -50,8 +50,3 @@ func (r *RoomUserCache) DeleteRoom(roomId uint64) int64 {
 func (r *RoomUserCache) cKey(roomId uint64) string {
 	return fmt.Sprintf("room:%d", roomId)
 }
-
-// 获取 redis 客户端
-//func (r *roomUserCache) c() *redis.Client {
-//	return pkgRedis.C(pkgRedis.NAME_DEFAULT)
-//}

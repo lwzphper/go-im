@@ -103,20 +103,34 @@ func (c *Consul) removeHealthService(serverId string) {
 	}
 }
 
-// RoundHealthServerUrl RoundHealthServer 轮询获取健康的服务节点
+// RoundHealthServerUrl 轮询获取健康的服务节点
 func (c *Consul) RoundHealthServerUrl() string {
+	srv := c.RoundHealthServer()
+	return c.FormatServerUrl(srv)
+}
+
+// 格式化服务地址
+func (c *Consul) FormatServerUrl(srv *api.AgentService) string {
+	if srv == nil {
+		return ""
+	}
+	return fmt.Sprintf("%s:%d", c.getServerAddress(srv.Address), srv.Port)
+}
+
+// 获取健康的节点
+func (c *Consul) RoundHealthServer() *api.AgentService {
 	var err error
 	// 没有节点，主动请求 consul 获取
 	if len(c.healthList) == 0 {
 		if c.healthList, err = c.HealthService(); err != nil {
 			logger.Error("get consul service error", zap.Error(err))
-			return ""
+			return nil
 		}
 	}
 
 	// 主动也获取不到节点，就直接返回
 	if len(c.healthList) == 0 {
-		return ""
+		return nil
 	}
 
 	// 防止剔除无效节点，索引越界
@@ -124,11 +138,10 @@ func (c *Consul) RoundHealthServerUrl() string {
 		c.lastIndex = 0
 	}
 
-	service := c.healthList[c.lastIndex]
-
+	srv := c.healthList[c.lastIndex]
 	c.lastIndex++
 
-	return fmt.Sprintf("%s:%d", c.getServerAddress(service.Address), service.Port)
+	return srv
 }
 
 // 兼容 docker 地址
