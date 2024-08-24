@@ -10,10 +10,6 @@ import (
 
 // 房间列表
 func (s *Service) roomList(n *connect.Node, data *types.Input) {
-	/*n := connect.GetNode(userId)
-	if n == nil {
-		return
-	}*/
 	list := s.roomCache.List()
 
 	var result = types.RoomList{}

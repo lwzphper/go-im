@@ -15,7 +15,7 @@ consul:
 
 ##################### 日志配置 ####################
 logging: # 正常错误日志
-#  name: go_im
+#  name: go_im.log
 #  file_name: ./log/rotate.log
   level: debug
 

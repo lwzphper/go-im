@@ -110,7 +110,9 @@ func (c *WsConn) handleConn(w http.ResponseWriter, r *http.Request) {
 
 	addr, err := util.SplitAddress(c.address, config.C.App.InDocker)
 	if err != nil {
-		panic(err)
+		OutputError(wsConn, types.CodeAuthError, "地址解析失败")
+		wsConn.Close()
+		return
 	}
 	node := NewNode(wsConn, userId, addr.String(), c.serverId, WithNodeLoginTime(time.Now().Unix()))
 
@@ -141,10 +143,6 @@ func (c *WsConn) handleGatewayConn(w http.ResponseWriter, r *http.Request) {
 	for {
 		var message []byte
 		_, message, err = wsConn.ReadMessage()
-		/*if err != nil && WsErrorNeedClose(err) {
-			_ = wsConn.Close()
-			return
-		}*/
 		if err != nil {
 			_ = wsConn.Close()
 			logger.Debug("gateway 读取消息失败", zap.Error(err))

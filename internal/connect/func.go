@@ -92,8 +92,8 @@ func handleReadErr(n *Node, err error) bool {
 
 // 关闭连接
 func CloseConn(n *Node) {
-	n.Mutex.Lock()
-	defer n.Mutex.Unlock()
+	n.CloseLock.Lock()
+	defer n.CloseLock.Unlock()
 
 	if n.IsClose {
 		return

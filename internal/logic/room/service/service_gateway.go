@@ -35,7 +35,6 @@ func (s *Service) GatewayMsg(wsConn *websocket.Conn, message []byte) {
 			logger.Debug("强制用户下线", zap.Uint64("user_id", data.FromUid))
 			connect.OutputError(mapNode.Conn, types2.CodeAuthError, "当前账号已被其他用户登录")
 			connect.CloseConn(mapNode)
-			return
 		}
 	default:
 		// 推送当前服务指定房间的全部用户

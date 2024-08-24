@@ -7,10 +7,9 @@ import (
 )
 
 const (
-	ReadMsg               = "room:readMsg"      // 接收到客户端消息事件
-	CloseConn             = "room:closeConn"    // 客户端连接关闭事件
-	GatewayMsg            = "room:gatewayMsg"   // 网关广播事件
-	ForceOfflineBroadcast = "room:forceOffline" // 强制下线事件
+	ReadMsg    = "room:readMsg"    // 接收到客户端消息事件
+	CloseConn  = "room:closeConn"  // 客户端连接关闭事件
+	GatewayMsg = "room:gatewayMsg" // 网关广播事件
 )
 
 var RoomEvent = &roomEvent{
@@ -24,9 +23,9 @@ type roomEvent struct {
 }
 
 // 订阅事件
-func (r *roomEvent) Subscribe(event string, fn any) {
-	if err := RoomEvent.bus.Subscribe(event, fn); err != nil {
-		logger.Error("roomEvent Subscribe error", zap.Error(err))
+func (r *roomEvent) SubscribeAsync(event string, fn any) {
+	if err := RoomEvent.bus.SubscribeAsync(event, fn, false); err != nil {
+		logger.Error("roomEvent SubscribeAsync error", zap.Error(err))
 	}
 }
 

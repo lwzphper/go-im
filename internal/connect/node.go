@@ -29,7 +29,7 @@ func WithNodeLoginTime(t int64) NodeOpt {
 }
 
 type Node struct {
-	Mutex           sync.Mutex      // WS互斥锁
+	CloseLock       sync.Mutex      // WS互斥锁
 	Conn            *websocket.Conn // websocket连接
 	UserId          uint64          // 用户ID
 	RoomId          uint64          // 订阅的房间ID

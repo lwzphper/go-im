@@ -6,10 +6,14 @@ import (
 	"go-im/config"
 	"go-im/pkg/logger"
 	"go.uber.org/zap"
+	"sync"
 	"time"
 )
 
-var gatewayClient *websocket.Conn
+var (
+	gatewayClient *websocket.Conn
+	gatewayLock   sync.Mutex
+)
 
 type GatewayClient struct {
 	conn *websocket.Conn
@@ -17,6 +21,8 @@ type GatewayClient struct {
 
 // 获取客户端
 func GetGatewayClient() *websocket.Conn {
+	gatewayLock.Lock()
+	defer gatewayLock.Unlock()
 	var err error
 	if gatewayClient == nil {
 		gatewayClient = gatewayDail()

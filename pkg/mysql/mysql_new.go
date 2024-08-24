@@ -48,7 +48,6 @@ type Mysql struct {
 	*MysqlConfig
 
 	// sqlDB *sql.DB
-	// lock  sync.Mutex
 }
 
 // GetClient 获取 gorm 对象
